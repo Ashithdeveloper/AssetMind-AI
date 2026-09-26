@@ -8,6 +8,7 @@ import { companyRoutes } from '../modules/companies/company.routes';
 import { analysisRoutes } from '../modules/analysis/analysis.routes';
 import { realtimeRoutes } from '../modules/realtime/realtime.routes';
 import { chatRoutes } from '../modules/chat/chat.routes';
+import { screenerRoutes } from '../modules/screener/screener.routes';
 import { sendSuccess } from '../utils/apiResponse';
 
 const router = Router();
@@ -37,5 +38,6 @@ router.use('/companies', companyRoutes);
 router.use('/analysis', analysisRoutes);
 router.use('/realtime', realtimeRoutes);
 router.use('/chat', chatRoutes);
+router.use('/screener', screenerRoutes);
 
 export const apiRoutes = router;

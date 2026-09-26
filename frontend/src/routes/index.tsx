@@ -20,6 +20,7 @@ import { Area, AreaChart, ResponsiveContainer, Tooltip, YAxis } from "recharts";
 
 import { NotificationBell, Sidebar } from "@/components/app-shell";
 import { Button } from "@/components/ui/button";
+import { ScreenerScoutModal } from "@/components/screener-scout-modal";
 import {
   companies as fallbackCompanies,
   fmtINR,
@@ -176,6 +177,7 @@ function ExplorePage() {
   const { list: watchlist, toggle: toggleWatchlist } = useWatchlist();
   const [mobileNav, setMobileNav] = useState(false);
   const [mobileFilters, setMobileFilters] = useState(false);
+  const [screenerModalOpen, setScreenerModalOpen] = useState(false);
 
   // Fetch live Indian equities from backend API
   useEffect(() => {
@@ -367,6 +369,14 @@ function ExplorePage() {
             </div>
 
             <div className="flex items-center gap-3">
+              <Button
+                size="sm"
+                onClick={() => setScreenerModalOpen(true)}
+                className="hidden md:flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-400 hover:bg-emerald-500/20 hover:border-emerald-500/50 shadow-sm cursor-pointer"
+              >
+                <Sparkles className="size-3.5 text-emerald-400" />
+                <span>Scrape Any Stock</span>
+              </Button>
               <div className="hidden sm:flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-medium text-emerald-400">
                 <ShieldCheck className="size-3.5" />
                 <span>Verified Screener Data</span>
@@ -399,14 +409,13 @@ function ExplorePage() {
                   {item.symbol}
                 </button>
               ))}
-              {query && (
-                <button
-                  onClick={() => setQuery("")}
-                  className="text-xs text-slate-400 hover:text-rose-400 underline ml-1"
-                >
-                  Clear
-                </button>
-              )}
+              <button
+                onClick={() => setScreenerModalOpen(true)}
+                className="flex items-center gap-1.5 rounded-md border border-emerald-500/40 bg-emerald-500/15 px-2.5 py-1 font-mono text-xs font-semibold text-emerald-300 hover:bg-emerald-500/25 transition-colors shadow-sm cursor-pointer"
+              >
+                <Sparkles className="size-3 text-emerald-400" />
+                + Live Scraper
+              </button>
             </div>
           </div>
 
@@ -521,6 +530,8 @@ function ExplorePage() {
                     watchlist={watchlist}
                     onSelect={(c) => setSelected(c)}
                     onWatch={(ticker) => toggleWatchlist(ticker)}
+                    searchQuery={query}
+                    onOpenScreenerScout={() => setScreenerModalOpen(true)}
                   />
                 </div>
               </div>
@@ -528,6 +539,13 @@ function ExplorePage() {
           </div>
         </div>
       </div>
+
+      {/* Live Scraper Modal */}
+      <ScreenerScoutModal
+        open={screenerModalOpen}
+        onOpenChange={setScreenerModalOpen}
+        initialQuery={query}
+      />
     </div>
   );
 }
@@ -621,7 +639,7 @@ function FilterRail({
             ].map((item) => (
               <button
                 key={item.id}
-                onClick={() => setCap(item.id as any)}
+                onClick={() => setCap(item.id as "All" | "Large" | "Mid" | "Small")}
                 className={cn(
                   "w-full rounded-md px-3 py-1.5 text-left text-xs font-medium transition-colors",
                   cap === item.id
@@ -945,7 +963,7 @@ function SpotlightCard({
                     fontSize: "11px",
                     padding: "4px 8px",
                   }}
-                  formatter={(v: any) => [
+                  formatter={(v: unknown) => [
                     `₹${Number(v).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
                     "Price",
                   ]}
@@ -976,21 +994,40 @@ function CompanyCardsGrid({
   watchlist,
   onSelect,
   onWatch,
+  searchQuery,
+  onOpenScreenerScout,
 }: {
   companies: Company[];
   selectedTicker?: string;
   watchlist: string[];
   onSelect: (c: Company) => void;
   onWatch: (ticker: string) => void;
+  searchQuery?: string;
+  onOpenScreenerScout?: () => void;
 }) {
   if (companies.length === 0) {
     return (
       <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-12 text-center">
-        <Building2 className="mx-auto size-8 text-slate-500" />
-        <h3 className="mt-3 text-base font-semibold text-white">No Indian companies found</h3>
-        <p className="mt-1 text-xs text-slate-400">
-          Try clearing your search query or adjusting your sector and market cap filters.
+        <Building2 className="mx-auto size-9 text-slate-500" />
+        <h3 className="mt-3 text-base font-semibold text-white">
+          {searchQuery ? `No local matches for "${searchQuery}"` : "No Indian companies found"}
+        </h3>
+        <p className="mt-1 text-xs text-slate-400 max-w-md mx-auto">
+          AssetMind AI can automatically search and scrape any listed Indian company live on-demand.
         </p>
+        {onOpenScreenerScout && (
+          <div className="mt-5">
+            <Button
+              onClick={onOpenScreenerScout}
+              className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-lg shadow-emerald-600/20 cursor-pointer"
+            >
+              <Sparkles className="mr-1.5 size-3.5" />
+              {searchQuery
+                ? `Search & Scrape "${searchQuery}" Live`
+                : "Search Live Market Index"}
+            </Button>
+          </div>
+        )}
       </div>
     );
   }

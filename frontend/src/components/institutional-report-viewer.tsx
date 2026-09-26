@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   TrendingUp,
   TrendingDown,
@@ -17,25 +17,30 @@ import {
   Layers,
   CheckCircle2,
   Info,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface InstitutionalReportViewerProps {
   markdown: string;
   sections?: Record<string, string>;
   companyName: string;
   symbol: string;
-  type?: 'BUY' | 'SELL';
+  type?: "BUY" | "SELL";
   generatedAt?: string;
 }
 
 export type ContentBlock =
-  | { type: 'table'; headers: string[]; rows: string[][] }
-  | { type: 'callout'; variant: 'takeaway' | 'warning' | 'info' | 'recommendation'; label: string; text: string }
-  | { type: 'bullet_list'; items: Array<{ label?: string; text: string }> }
-  | { type: 'subheading'; title: string }
-  | { type: 'divider' }
-  | { type: 'paragraph'; text: string };
+  | { type: "table"; headers: string[]; rows: string[][] }
+  | {
+      type: "callout";
+      variant: "takeaway" | "warning" | "info" | "recommendation";
+      label: string;
+      text: string;
+    }
+  | { type: "bullet_list"; items: Array<{ label?: string; text: string }> }
+  | { type: "subheading"; title: string }
+  | { type: "divider" }
+  | { type: "paragraph"; text: string };
 
 interface ParsedSection {
   id: string;
@@ -59,7 +64,7 @@ function RenderFormattedInline({ text }: { text: string }) {
       tokens.push(text.substring(lastIndex, match.index));
     }
     const token = match[0];
-    if (token.startsWith('[Evidence') && token.endsWith(']')) {
+    if (token.startsWith("[Evidence") && token.endsWith("]")) {
       const label = token.slice(1, -1);
       tokens.push(
         <span
@@ -68,19 +73,19 @@ function RenderFormattedInline({ text }: { text: string }) {
         >
           <FileText className="size-2.5 text-emerald-400/80" />
           {label}
-        </span>
+        </span>,
       );
-    } else if (token.startsWith('**') && token.endsWith('**')) {
+    } else if (token.startsWith("**") && token.endsWith("**")) {
       tokens.push(
         <strong key={`b-${match.index}`} className="font-semibold text-slate-100">
           {token.slice(2, -2)}
-        </strong>
+        </strong>,
       );
-    } else if (token.startsWith('*') && token.endsWith('*')) {
+    } else if (token.startsWith("*") && token.endsWith("*")) {
       tokens.push(
         <em key={`i-${match.index}`} className="italic text-slate-300">
           {token.slice(1, -1)}
-        </em>
+        </em>,
       );
     }
     lastIndex = pattern.lastIndex;
@@ -106,8 +111,8 @@ function InstitutionalTable({ headers, rows }: { headers: string[]; rows: string
                 <th
                   key={i}
                   className={cn(
-                    'px-3.5 py-2.5 font-semibold select-none',
-                    i === 0 ? 'text-left' : i === headers.length - 1 ? 'text-right' : 'text-left'
+                    "px-3.5 py-2.5 font-semibold select-none",
+                    i === 0 ? "text-left" : i === headers.length - 1 ? "text-right" : "text-left",
                   )}
                 >
                   {h}
@@ -123,18 +128,18 @@ function InstitutionalTable({ headers, rows }: { headers: string[]; rows: string
                   const isLast = cIdx === headers.length - 1;
                   const isNumOrMoney =
                     /^[₹$€£]?[+-]?[\d,.]+%?x?/.test(cell) ||
-                    cell.includes('bn') ||
-                    cell.includes('trn') ||
-                    cell.includes('Cr');
+                    cell.includes("bn") ||
+                    cell.includes("trn") ||
+                    cell.includes("Cr");
 
                   return (
                     <td
                       key={cIdx}
                       className={cn(
-                        'px-3.5 py-2.5',
-                        isFirst ? 'font-medium text-slate-200' : '',
-                        isLast ? 'text-right' : '',
-                        isNumOrMoney ? 'font-mono text-slate-100 font-medium' : 'text-slate-300'
+                        "px-3.5 py-2.5",
+                        isFirst ? "font-medium text-slate-200" : "",
+                        isLast ? "text-right" : "",
+                        isNumOrMoney ? "font-mono text-slate-100 font-medium" : "text-slate-300",
                       )}
                     >
                       <RenderFormattedInline text={cell} />
@@ -157,38 +162,43 @@ function ExecutiveCallout({
   label,
   text,
 }: {
-  variant: 'takeaway' | 'warning' | 'info' | 'recommendation';
+  variant: "takeaway" | "warning" | "info" | "recommendation";
   label: string;
   text: string;
 }) {
   const config = {
     takeaway: {
-      border: 'border-emerald-500/30 bg-emerald-500/5',
-      badge: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
+      border: "border-emerald-500/30 bg-emerald-500/5",
+      badge: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
       icon: <Sparkles className="size-4 text-emerald-400 shrink-0" />,
     },
     warning: {
-      border: 'border-amber-500/30 bg-amber-500/5',
-      badge: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
+      border: "border-amber-500/30 bg-amber-500/5",
+      badge: "bg-amber-500/15 text-amber-400 border-amber-500/30",
       icon: <AlertTriangle className="size-4 text-amber-400 shrink-0" />,
     },
     recommendation: {
-      border: 'border-blue-500/30 bg-blue-500/5',
-      badge: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
+      border: "border-blue-500/30 bg-blue-500/5",
+      badge: "bg-blue-500/15 text-blue-400 border-blue-500/30",
       icon: <CheckCircle2 className="size-4 text-blue-400 shrink-0" />,
     },
     info: {
-      border: 'border-slate-700/60 bg-slate-900/60',
-      badge: 'bg-slate-800 text-slate-300 border-slate-700',
+      border: "border-slate-700/60 bg-slate-900/60",
+      badge: "bg-slate-800 text-slate-300 border-slate-700",
       icon: <Info className="size-4 text-slate-400 shrink-0" />,
     },
   }[variant];
 
   return (
-    <div className={cn('my-3 rounded-lg border p-3.5 shadow-sm transition-all', config.border)}>
+    <div className={cn("my-3 rounded-lg border p-3.5 shadow-sm transition-all", config.border)}>
       <div className="flex items-center gap-2 mb-1.5">
         {config.icon}
-        <span className={cn('rounded border px-2 py-0.5 font-mono text-[10px] font-bold tracking-wider uppercase', config.badge)}>
+        <span
+          className={cn(
+            "rounded border px-2 py-0.5 font-mono text-[10px] font-bold tracking-wider uppercase",
+            config.badge,
+          )}
+        >
           {label}
         </span>
       </div>
@@ -206,7 +216,7 @@ function parseSectionBlocks(lines: string[]): ContentBlock[] {
   let i = 0;
 
   while (i < lines.length) {
-    const rawLine = lines[i] ?? '';
+    const rawLine = lines[i] ?? "";
     const line = rawLine.trim();
 
     if (!line) {
@@ -215,49 +225,49 @@ function parseSectionBlocks(lines: string[]): ContentBlock[] {
     }
 
     // 1. Divider rule: --- or ***
-    if (line === '---' || line === '***' || line === '___') {
-      blocks.push({ type: 'divider' });
+    if (line === "---" || line === "***" || line === "___") {
+      blocks.push({ type: "divider" });
       i++;
       continue;
     }
 
     // 2. Subheading: ### or ####
-    if (line.startsWith('### ') || line.startsWith('#### ')) {
-      const title = line.replace(/^#{3,4}\s+/, '').trim();
-      blocks.push({ type: 'subheading', title });
+    if (line.startsWith("### ") || line.startsWith("#### ")) {
+      const title = line.replace(/^#{3,4}\s+/, "").trim();
+      blocks.push({ type: "subheading", title });
       i++;
       continue;
     }
 
     // 3. Table detection: starts and ends with |
-    if (line.startsWith('|') && line.endsWith('|')) {
+    if (line.startsWith("|") && line.endsWith("|")) {
       const tableLines: string[] = [];
       while (
         i < lines.length &&
-        Boolean(lines[i]?.trim().startsWith('|')) &&
-        Boolean(lines[i]?.trim().endsWith('|'))
+        Boolean(lines[i]?.trim().startsWith("|")) &&
+        Boolean(lines[i]?.trim().endsWith("|"))
       ) {
-        tableLines.push((lines[i] ?? '').trim());
+        tableLines.push((lines[i] ?? "").trim());
         i++;
       }
 
       if (tableLines.length >= 2) {
         // First line contains headers
-        const headerRow = tableLines[0] ?? '';
+        const headerRow = tableLines[0] ?? "";
         const headers = headerRow
-          .split('|')
+          .split("|")
           .slice(1, -1)
           .map((h) => h.trim());
 
         const rows: string[][] = [];
         for (let r = 1; r < tableLines.length; r++) {
-          const rowLine = tableLines[r] ?? '';
+          const rowLine = tableLines[r] ?? "";
           // Check if it's the markdown separator row (|---|---|)
-          if (rowLine.replace(/[|\s-:]/g, '').length === 0) {
+          if (rowLine.replace(/[|\s-:]/g, "").length === 0) {
             continue;
           }
           const cells = rowLine
-            .split('|')
+            .split("|")
             .slice(1, -1)
             .map((c) => c.trim());
           if (cells.length > 0) {
@@ -266,7 +276,7 @@ function parseSectionBlocks(lines: string[]): ContentBlock[] {
         }
 
         if (headers.length > 0 && rows.length > 0) {
-          blocks.push({ type: 'table', headers, rows });
+          blocks.push({ type: "table", headers, rows });
           continue;
         }
       }
@@ -274,30 +284,30 @@ function parseSectionBlocks(lines: string[]): ContentBlock[] {
 
     // 4. Bullet lists: lines starting with - , * , • , or 1.
     if (
-      line.startsWith('- ') ||
-      line.startsWith('* ') ||
-      line.startsWith('• ') ||
+      line.startsWith("- ") ||
+      line.startsWith("* ") ||
+      line.startsWith("• ") ||
       /^\d+\.\s+/.test(line)
     ) {
       const listItems: Array<{ label?: string; text: string }> = [];
       while (
         i < lines.length &&
-        ((lines[i] ?? '').trim().startsWith('- ') ||
-          (lines[i] ?? '').trim().startsWith('* ') ||
-          (lines[i] ?? '').trim().startsWith('• ') ||
-          /^\d+\.\s+/.test((lines[i] ?? '').trim()))
+        ((lines[i] ?? "").trim().startsWith("- ") ||
+          (lines[i] ?? "").trim().startsWith("* ") ||
+          (lines[i] ?? "").trim().startsWith("• ") ||
+          /^\d+\.\s+/.test((lines[i] ?? "").trim()))
       ) {
-        const itemLine = (lines[i] ?? '').trim();
-        const content = itemLine.replace(/^([-*•]|\d+\.)\s+/, '').trim();
+        const itemLine = (lines[i] ?? "").trim();
+        const content = itemLine.replace(/^([-*•]|\d+\.)\s+/, "").trim();
         // Check for **Label:** or Label:
         const boldMatch = content.match(/^\*\*([^*]+)\*\*:\s*(.*)$/);
         if (boldMatch && boldMatch[1] && boldMatch[2] !== undefined) {
           listItems.push({ label: boldMatch[1].trim(), text: boldMatch[2].trim() });
         } else {
-          const colonIdx = content.indexOf(':');
-          if (colonIdx > 0 && colonIdx < 45 && !content.slice(0, colonIdx).includes('http')) {
+          const colonIdx = content.indexOf(":");
+          if (colonIdx > 0 && colonIdx < 45 && !content.slice(0, colonIdx).includes("http")) {
             listItems.push({
-              label: content.substring(0, colonIdx).replace(/\*\*/g, '').trim(),
+              label: content.substring(0, colonIdx).replace(/\*\*/g, "").trim(),
               text: content.substring(colonIdx + 1).trim(),
             });
           } else {
@@ -306,27 +316,28 @@ function parseSectionBlocks(lines: string[]): ContentBlock[] {
         }
         i++;
       }
-      blocks.push({ type: 'bullet_list', items: listItems });
+      blocks.push({ type: "bullet_list", items: listItems });
       continue;
     }
 
     // 5. Callouts (e.g. **Key Take-away:** or **Conclusion:**)
     const calloutMatch = line.match(
-      /^\*\*(Key\s*Take-?away|Takeaway|Bottom\s*Line|Conclusion|Recommendation|Warning|Risk\s*Factor|Assessment|Verdict|Note)\*\*:\s*(.*)$/i
+      /^\*\*(Key\s*Take-?away|Takeaway|Bottom\s*Line|Conclusion|Recommendation|Warning|Risk\s*Factor|Assessment|Verdict|Note)\*\*:\s*(.*)$/i,
     );
     if (calloutMatch && calloutMatch[1] && calloutMatch[2] !== undefined) {
       const rawLabel = calloutMatch[1].trim();
       const text = calloutMatch[2].trim();
-      let variant: 'takeaway' | 'warning' | 'info' | 'recommendation' = 'takeaway';
+      let variant: "takeaway" | "warning" | "info" | "recommendation" = "takeaway";
       const lower = rawLabel.toLowerCase();
-      if (lower.includes('warning') || lower.includes('risk')) variant = 'warning';
-      else if (lower.includes('recommendation') || lower.includes('action')) variant = 'recommendation';
-      else if (lower.includes('note')) variant = 'info';
+      if (lower.includes("warning") || lower.includes("risk")) variant = "warning";
+      else if (lower.includes("recommendation") || lower.includes("action"))
+        variant = "recommendation";
+      else if (lower.includes("note")) variant = "info";
 
       blocks.push({
-        type: 'callout',
+        type: "callout",
         variant,
-        label: rawLabel.replace(/-/g, ' ').toUpperCase(),
+        label: rawLabel.replace(/-/g, " ").toUpperCase(),
         text,
       });
       i++;
@@ -334,7 +345,7 @@ function parseSectionBlocks(lines: string[]): ContentBlock[] {
     }
 
     // 6. Regular narrative paragraph
-    blocks.push({ type: 'paragraph', text: line });
+    blocks.push({ type: "paragraph", text: line });
     i++;
   }
 
@@ -348,30 +359,30 @@ export function InstitutionalReportViewer({
   sections,
   companyName,
   symbol,
-  type = 'BUY',
+  type = "BUY",
   generatedAt,
 }: InstitutionalReportViewerProps) {
-  const [selectedSectionId, setSelectedSectionId] = useState<string>('all');
+  const [selectedSectionId, setSelectedSectionId] = useState<string>("all");
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
 
   // Parse markdown into clean, structured analytical sections
   const parsedSections = React.useMemo(() => {
     const result: ParsedSection[] = [];
-    const lines = markdown.split('\n');
+    const lines = markdown.split("\n");
 
-    let currentTitle = 'Executive Overview';
+    let currentTitle = "Executive Overview";
     let currentLines: string[] = [];
 
     const flush = () => {
       if (currentLines.length === 0) return;
-      const rawText = currentLines.join('\n').trim();
+      const rawText = currentLines.join("\n").trim();
       const blocks = parseSectionBlocks(currentLines);
 
       if (blocks.length > 0) {
         const id = currentTitle
           .toLowerCase()
-          .replace(/[^a-z0-9]+/g, '-')
-          .replace(/(^-|-$)/g, '');
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/(^-|-$)/g, "");
 
         result.push({
           id: id || `section-${result.length}`,
@@ -387,13 +398,16 @@ export function InstitutionalReportViewer({
     for (const line of lines) {
       const trimmed = line.trim();
       // Skip top-level document hero title (# Capital Preservation Exit Analysis: ...)
-      if (trimmed.startsWith('# ') && (trimmed.includes('Analysis') || trimmed.includes('Memo') || trimmed.includes('Report'))) {
+      if (
+        trimmed.startsWith("# ") &&
+        (trimmed.includes("Analysis") || trimmed.includes("Memo") || trimmed.includes("Report"))
+      ) {
         continue;
       }
 
-      if (trimmed.startsWith('## ') || trimmed.startsWith('### ')) {
+      if (trimmed.startsWith("## ") || trimmed.startsWith("### ")) {
         flush();
-        currentTitle = trimmed.replace(/^[#\s0-9.]+/g, '').trim();
+        currentTitle = trimmed.replace(/^[#\s0-9.]+/g, "").trim();
       } else {
         currentLines.push(line);
       }
@@ -406,19 +420,31 @@ export function InstitutionalReportViewer({
   // Icon mapping for memo and exit analysis sections
   const getSectionIcon = (title: string) => {
     const t = title.toLowerCase();
-    if (t.includes('performance') || t.includes('summary')) return <Activity className="size-4 text-emerald-400" />;
-    if (t.includes('deteriorat') || t.includes('decline') || t.includes('weakness')) return <AlertTriangle className="size-4 text-amber-400" />;
-    if (t.includes('overview') || t.includes('company')) return <Building2 className="size-4 text-primary" />;
-    if (t.includes('strength')) return <ShieldCheck className="size-4 text-emerald-400" />;
-    if (t.includes('cash flow') || t.includes('fcf')) return <Banknote className="size-4 text-primary" />;
-    if (t.includes('valuation') || t.includes('multiple')) return <DollarSign className="size-4 text-primary" />;
-    if (t.includes('roe') || t.includes('margin') || t.includes('profitability')) return <Activity className="size-4 text-emerald-400" />;
-    if (t.includes('debt') || t.includes('leverage')) return <Layers className="size-4 text-amber-400" />;
-    if (t.includes('risk') || t.includes('exit')) return <ShieldAlert className="size-4 text-rose-400" />;
-    if (t.includes('profit') || t.includes('loss') || t.includes('investor')) return <Banknote className="size-4 text-emerald-400" />;
-    if (t.includes('growth') || t.includes('opportunit')) return <TrendingUp className="size-4 text-primary" />;
-    if (t.includes('monitor') || t.includes('watch')) return <Eye className="size-4 text-blue-400" />;
-    if (t.includes('source') || t.includes('evidence') || t.includes('reference')) return <FileText className="size-4 text-muted-foreground" />;
+    if (t.includes("performance") || t.includes("summary"))
+      return <Activity className="size-4 text-emerald-400" />;
+    if (t.includes("deteriorat") || t.includes("decline") || t.includes("weakness"))
+      return <AlertTriangle className="size-4 text-amber-400" />;
+    if (t.includes("overview") || t.includes("company"))
+      return <Building2 className="size-4 text-primary" />;
+    if (t.includes("strength")) return <ShieldCheck className="size-4 text-emerald-400" />;
+    if (t.includes("cash flow") || t.includes("fcf"))
+      return <Banknote className="size-4 text-primary" />;
+    if (t.includes("valuation") || t.includes("multiple"))
+      return <DollarSign className="size-4 text-primary" />;
+    if (t.includes("roe") || t.includes("margin") || t.includes("profitability"))
+      return <Activity className="size-4 text-emerald-400" />;
+    if (t.includes("debt") || t.includes("leverage"))
+      return <Layers className="size-4 text-amber-400" />;
+    if (t.includes("risk") || t.includes("exit"))
+      return <ShieldAlert className="size-4 text-rose-400" />;
+    if (t.includes("profit") || t.includes("loss") || t.includes("investor"))
+      return <Banknote className="size-4 text-emerald-400" />;
+    if (t.includes("growth") || t.includes("opportunit"))
+      return <TrendingUp className="size-4 text-primary" />;
+    if (t.includes("monitor") || t.includes("watch"))
+      return <Eye className="size-4 text-blue-400" />;
+    if (t.includes("source") || t.includes("evidence") || t.includes("reference"))
+      return <FileText className="size-4 text-muted-foreground" />;
     return <Sparkles className="size-4 text-primary" />;
   };
 
@@ -427,7 +453,7 @@ export function InstitutionalReportViewer({
   };
 
   const displayedSections =
-    selectedSectionId === 'all'
+    selectedSectionId === "all"
       ? parsedSections
       : parsedSections.filter((s) => s.id === selectedSectionId);
 
@@ -437,11 +463,17 @@ export function InstitutionalReportViewer({
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-card p-4">
         <div className="flex items-center gap-3">
           <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
-            {type === 'BUY' ? <Sparkles className="size-5" /> : <ShieldAlert className="size-5 text-amber-500" />}
+            {type === "BUY" ? (
+              <Sparkles className="size-5" />
+            ) : (
+              <ShieldAlert className="size-5 text-amber-500" />
+            )}
           </div>
           <div>
             <h3 className="font-semibold text-sm text-foreground">
-              {type === 'BUY' ? 'Institutional Buy-Side Memo' : 'Capital Preservation Exit Analysis'}
+              {type === "BUY"
+                ? "Institutional Buy-Side Memo"
+                : "Capital Preservation Exit Analysis"}
             </h3>
             <p className="text-xs text-muted-foreground">
               {companyName} ({symbol}) · Evaluated on verified filings and Indian market data
@@ -454,7 +486,13 @@ export function InstitutionalReportViewer({
             {parsedSections.length} Analytical Sections
           </span>
           {generatedAt && (
-            <span>{new Date(generatedAt).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+            <span>
+              {new Date(generatedAt).toLocaleDateString("en-IN", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })}
+            </span>
           )}
         </div>
       </div>
@@ -463,12 +501,12 @@ export function InstitutionalReportViewer({
       {parsedSections.length > 1 && (
         <div className="flex flex-wrap gap-1.5 border-b border-border pb-3">
           <button
-            onClick={() => setSelectedSectionId('all')}
+            onClick={() => setSelectedSectionId("all")}
             className={cn(
-              'rounded-full px-3 py-1 font-mono text-xs font-medium transition-colors',
-              selectedSectionId === 'all'
-                ? 'bg-primary text-primary-foreground font-semibold shadow-sm'
-                : 'bg-secondary/60 text-muted-foreground hover:bg-secondary hover:text-foreground'
+              "rounded-full px-3 py-1 font-mono text-xs font-medium transition-colors",
+              selectedSectionId === "all"
+                ? "bg-primary text-primary-foreground font-semibold shadow-sm"
+                : "bg-secondary/60 text-muted-foreground hover:bg-secondary hover:text-foreground",
             )}
           >
             All Sections
@@ -478,14 +516,14 @@ export function InstitutionalReportViewer({
               key={s.id}
               onClick={() => setSelectedSectionId(s.id)}
               className={cn(
-                'flex items-center gap-1.5 rounded-full px-3 py-1 font-mono text-xs font-medium transition-colors',
+                "flex items-center gap-1.5 rounded-full px-3 py-1 font-mono text-xs font-medium transition-colors",
                 selectedSectionId === s.id
-                  ? 'bg-primary text-primary-foreground font-semibold shadow-sm'
-                  : 'bg-secondary/60 text-muted-foreground hover:bg-secondary hover:text-foreground'
+                  ? "bg-primary text-primary-foreground font-semibold shadow-sm"
+                  : "bg-secondary/60 text-muted-foreground hover:bg-secondary hover:text-foreground",
               )}
             >
               <span>{idx + 1}.</span>
-              <span>{s.title.replace(/^[0-9.\s]+/, '')}</span>
+              <span>{s.title.replace(/^[0-9.\s]+/, "")}</span>
             </button>
           ))}
         </div>
@@ -497,18 +535,16 @@ export function InstitutionalReportViewer({
           const isCollapsed = expandedSections[section.id] === true;
 
           // Compute section summary tag
-          const tableBlock = section.blocks.find((b) => b.type === 'table') as
-            | { type: 'table'; headers: string[]; rows: string[][] }
-            | undefined;
-          const bulletBlock = section.blocks.find((b) => b.type === 'bullet_list') as
-            | { type: 'bullet_list'; items: Array<any> }
-            | undefined;
+          const tableBlock = section.blocks.find((b) => b.type === "table") as
+            { type: "table"; headers: string[]; rows: string[][] } | undefined;
+          const bulletBlock = section.blocks.find((b) => b.type === "bullet_list") as
+            { type: "bullet_list"; items: Array<any> } | undefined;
 
           const summaryTag = tableBlock
             ? `${tableBlock.rows.length} Metrics Audited`
             : bulletBlock
-            ? `${bulletBlock.items.length} Key Data Points`
-            : 'Analytical Deep-Dive';
+              ? `${bulletBlock.items.length} Key Data Points`
+              : "Analytical Deep-Dive";
 
           return (
             <div
@@ -527,14 +563,12 @@ export function InstitutionalReportViewer({
                   </span>
                   {getSectionIcon(section.title)}
                   <h4 className="font-semibold text-sm text-foreground">
-                    {section.title.replace(/^[0-9.\s]+/, '')}
+                    {section.title.replace(/^[0-9.\s]+/, "")}
                   </h4>
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <span className="font-mono text-[11px] text-muted-foreground">
-                    {summaryTag}
-                  </span>
+                  <span className="font-mono text-[11px] text-muted-foreground">{summaryTag}</span>
                   {isCollapsed ? (
                     <ChevronDown className="size-4 text-muted-foreground" />
                   ) : (
@@ -548,10 +582,16 @@ export function InstitutionalReportViewer({
                 <div className="p-4 space-y-3">
                   {section.blocks.map((block, bIdx) => {
                     switch (block.type) {
-                      case 'table':
-                        return <InstitutionalTable key={bIdx} headers={block.headers} rows={block.rows} />;
+                      case "table":
+                        return (
+                          <InstitutionalTable
+                            key={bIdx}
+                            headers={block.headers}
+                            rows={block.rows}
+                          />
+                        );
 
-                      case 'callout':
+                      case "callout":
                         return (
                           <ExecutiveCallout
                             key={bIdx}
@@ -561,17 +601,20 @@ export function InstitutionalReportViewer({
                           />
                         );
 
-                      case 'subheading':
+                      case "subheading":
                         return (
-                          <h5 key={bIdx} className="font-semibold text-xs text-foreground uppercase tracking-wider mt-4 mb-1">
+                          <h5
+                            key={bIdx}
+                            className="font-semibold text-xs text-foreground uppercase tracking-wider mt-4 mb-1"
+                          >
                             {block.title}
                           </h5>
                         );
 
-                      case 'divider':
+                      case "divider":
                         return <div key={bIdx} className="my-3 border-t border-border/50" />;
 
-                      case 'bullet_list':
+                      case "bullet_list":
                         return (
                           <div key={bIdx} className="my-2 space-y-2">
                             {block.items.map((b, itemIdx) => (
@@ -585,7 +628,7 @@ export function InstitutionalReportViewer({
                                     <>
                                       <span className="font-mono font-semibold uppercase tracking-wide text-foreground">
                                         {b.label}:
-                                      </span>{' '}
+                                      </span>{" "}
                                       <span className="text-foreground/90 font-mono">
                                         <RenderFormattedInline text={b.text} />
                                       </span>
@@ -601,7 +644,7 @@ export function InstitutionalReportViewer({
                           </div>
                         );
 
-                      case 'paragraph':
+                      case "paragraph":
                       default:
                         return (
                           <p key={bIdx} className="text-sm leading-relaxed text-foreground/90">

@@ -119,12 +119,10 @@ function parseChatMarkdown(content: string): ChatBlock[] {
     // 2. Markdown Table Detection: Starts and ends with | or contains multiple |
     if (line.startsWith("|") && (line.endsWith("|") || line.includes("|"))) {
       const tableLines: string[] = [];
-      while (
-        i < rawLines.length &&
-        rawLines[i] &&
-        rawLines[i].trim().startsWith("|")
-      ) {
-        tableLines.push(rawLines[i].trim());
+      while (i < rawLines.length) {
+        const cur = rawLines[i];
+        if (!cur || !cur.trim().startsWith("|")) break;
+        tableLines.push(cur.trim());
         i++;
       }
 
@@ -146,7 +144,11 @@ function parseChatMarkdown(content: string): ChatBlock[] {
           const cells = rowLine
             .split("|")
             .map((c) => c.trim())
-            .filter((_, idx, arr) => !(idx === 0 && arr[0] === "") && !(idx === arr.length - 1 && arr[arr.length - 1] === ""));
+            .filter(
+              (_, idx, arr) =>
+                !(idx === 0 && arr[0] === "") &&
+                !(idx === arr.length - 1 && arr[arr.length - 1] === ""),
+            );
 
           if (cells.length > 0) {
             rows.push(cells);
@@ -183,8 +185,10 @@ function parseChatMarkdown(content: string): ChatBlock[] {
     // 5. Bullet Lists: Contiguous lines starting with -, *, •, or numbers
     if (/^([-*•]|\d+\.)\s+/.test(line)) {
       const items: string[] = [];
-      while (i < rawLines.length && /^([-*•]|\d+\.)\s+/.test(rawLines[i].trim())) {
-        items.push(rawLines[i].trim().replace(/^([-*•]|\d+\.)\s+/, ""));
+      while (i < rawLines.length) {
+        const cur = rawLines[i];
+        if (!cur || !/^([-*•]|\d+\.)\s+/.test(cur.trim())) break;
+        items.push(cur.trim().replace(/^([-*•]|\d+\.)\s+/, ""));
         i++;
       }
       blocks.push({ type: "bullet_list", items });
@@ -239,13 +243,13 @@ function formatSingleInlineSegment(text: string): React.ReactNode {
       parts.push(
         <strong key={match.index} className="font-semibold text-foreground">
           {token.slice(2, -2)}
-        </strong>
+        </strong>,
       );
     } else if (token.startsWith("*") && token.endsWith("*")) {
       parts.push(
         <em key={match.index} className="italic text-muted-foreground">
           {token.slice(1, -1)}
-        </em>
+        </em>,
       );
     } else if (token.startsWith("`") && token.endsWith("`")) {
       parts.push(
@@ -254,7 +258,7 @@ function formatSingleInlineSegment(text: string): React.ReactNode {
           className="rounded bg-secondary/80 px-1 py-0.5 font-mono text-xs text-primary"
         >
           {token.slice(1, -1)}
-        </code>
+        </code>,
       );
     } else if (token.startsWith("[Source:") || token.startsWith("[Live")) {
       parts.push(
@@ -263,7 +267,7 @@ function formatSingleInlineSegment(text: string): React.ReactNode {
           className="inline-flex items-center rounded border border-primary/30 bg-primary/10 px-1.5 py-0.2 font-mono text-[10px] text-primary"
         >
           {token.slice(1, -1)}
-        </span>
+        </span>,
       );
     }
 
@@ -279,13 +283,7 @@ function formatSingleInlineSegment(text: string): React.ReactNode {
 
 // ─── Financial Table Component ────────────────────────────────────────────────
 
-function FinancialTableBlock({
-  headers,
-  rows,
-}: {
-  headers: string[];
-  rows: string[][];
-}) {
+function FinancialTableBlock({ headers, rows }: { headers: string[]; rows: string[][] }) {
   return (
     <div className="my-3 overflow-hidden rounded-lg border border-border/80 bg-slate-950/80 shadow-sm">
       <div
@@ -300,7 +298,7 @@ function FinancialTableBlock({
                   key={i}
                   className={cn(
                     "px-3.5 py-2.5 whitespace-nowrap select-none",
-                    i === 0 ? "text-left" : "text-left"
+                    i === 0 ? "text-left" : "text-left",
                   )}
                 >
                   {formatInlineTokens(h)}
@@ -310,10 +308,7 @@ function FinancialTableBlock({
           </thead>
           <tbody className="divide-y divide-border/40">
             {rows.map((row, rIdx) => (
-              <tr
-                key={rIdx}
-                className="transition-colors hover:bg-slate-900/60"
-              >
+              <tr key={rIdx} className="transition-colors hover:bg-slate-900/60">
                 {row.map((cell, cIdx) => {
                   const isFirst = cIdx === 0;
                   return (
@@ -321,7 +316,7 @@ function FinancialTableBlock({
                       key={cIdx}
                       className={cn(
                         "px-3.5 py-2.5 align-top leading-relaxed text-slate-200",
-                        isFirst ? "font-semibold text-foreground" : ""
+                        isFirst ? "font-semibold text-foreground" : "",
                       )}
                     >
                       {formatInlineTokens(cell)}
@@ -360,7 +355,7 @@ function RenderChatBlocks({ content }: { content: string }) {
                   "font-display font-semibold tracking-wide text-foreground",
                   block.level <= 2
                     ? "mt-4 text-base text-primary"
-                    : "mt-3 text-sm text-foreground/95"
+                    : "mt-3 text-sm text-foreground/95",
                 )}
               >
                 {formatInlineTokens(block.text)}
@@ -368,13 +363,7 @@ function RenderChatBlocks({ content }: { content: string }) {
             );
 
           case "table":
-            return (
-              <FinancialTableBlock
-                key={idx}
-                headers={block.headers}
-                rows={block.rows}
-              />
-            );
+            return <FinancialTableBlock key={idx} headers={block.headers} rows={block.rows} />;
 
           case "callout":
             return (
@@ -432,7 +421,7 @@ function StockSnapshotCard({
   if (stock.high52 && stock.low52 && stock.high52 > stock.low52) {
     pct52 = Math.min(
       100,
-      Math.max(0, ((stock.price - stock.low52) / (stock.high52 - stock.low52)) * 100)
+      Math.max(0, ((stock.price - stock.low52) / (stock.high52 - stock.low52)) * 100),
     );
   }
 
@@ -441,9 +430,7 @@ function StockSnapshotCard({
       <div className="flex items-center justify-between gap-2 border-b border-border/40 pb-2">
         <div>
           <div className="flex items-center gap-2">
-            <span className="font-mono text-xs font-bold text-foreground">
-              {stock.symbol}
-            </span>
+            <span className="font-mono text-xs font-bold text-foreground">{stock.symbol}</span>
             <span className="rounded bg-secondary px-1.5 py-0.2 font-mono text-[9px] text-muted-foreground uppercase">
               NSE
             </span>
@@ -452,26 +439,18 @@ function StockSnapshotCard({
               LIVE
             </span>
           </div>
-          <p className="truncate text-xs text-muted-foreground">
-            {stock.companyName}
-          </p>
+          <p className="truncate text-xs text-muted-foreground">{stock.companyName}</p>
         </div>
 
         <div className="text-right">
-          <div className="font-mono text-sm font-bold text-foreground">
-            {fmtINR(stock.price)}
-          </div>
+          <div className="font-mono text-sm font-bold text-foreground">{fmtINR(stock.price)}</div>
           <div
             className={cn(
               "flex items-center justify-end gap-1 font-mono text-xs font-semibold",
-              isPositive ? "text-emerald-400" : "text-rose-400"
+              isPositive ? "text-emerald-400" : "text-rose-400",
             )}
           >
-            {isPositive ? (
-              <TrendingUp className="size-3" />
-            ) : (
-              <TrendingDown className="size-3" />
-            )}
+            {isPositive ? <TrendingUp className="size-3" /> : <TrendingDown className="size-3" />}
             <span>
               {isPositive ? "+" : ""}
               {stock.changePercent.toFixed(2)}%
@@ -515,10 +494,7 @@ function StockSnapshotCard({
             <span>52W High</span>
           </div>
           <div className="relative mt-1 h-1.5 w-full overflow-hidden rounded-full bg-secondary">
-            <div
-              className="h-full rounded-full bg-primary/70"
-              style={{ width: `${pct52}%` }}
-            />
+            <div className="h-full rounded-full bg-primary/70" style={{ width: `${pct52}%` }} />
           </div>
         </div>
       )}
@@ -548,9 +524,7 @@ function StockSnapshotCard({
         </div>
 
         <div className="flex items-center gap-3">
-          <span className="font-mono text-[9px] text-muted-foreground">
-            {stock.source}
-          </span>
+          <span className="font-mono text-[9px] text-muted-foreground">{stock.source}</span>
           <Link
             to="/company/$ticker"
             params={{ ticker: stock.symbol.toLowerCase() }}
@@ -599,8 +573,8 @@ function AnalysisDrawerModal({
         const res = await apiClient.generateSellAnalysis(symbol);
         setData(res);
       }
-    } catch (err: any) {
-      setError(err.message || "Failed to load analysis");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to load analysis");
     } finally {
       setLoading(false);
     }
@@ -622,10 +596,14 @@ function AnalysisDrawerModal({
                 "flex size-8 items-center justify-center rounded-lg border",
                 type === "BUY"
                   ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-400"
-                  : "border-rose-500/40 bg-rose-500/15 text-rose-400"
+                  : "border-rose-500/40 bg-rose-500/15 text-rose-400",
               )}
             >
-              {type === "BUY" ? <TrendingUp className="size-4" /> : <TrendingDown className="size-4" />}
+              {type === "BUY" ? (
+                <TrendingUp className="size-4" />
+              ) : (
+                <TrendingDown className="size-4" />
+              )}
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -634,7 +612,9 @@ function AnalysisDrawerModal({
                   variant="outline"
                   className={cn(
                     "text-[10px] font-mono uppercase",
-                    type === "BUY" ? "border-emerald-500/40 text-emerald-400" : "border-rose-500/40 text-rose-400"
+                    type === "BUY"
+                      ? "border-emerald-500/40 text-emerald-400"
+                      : "border-rose-500/40 text-rose-400",
                   )}
                 >
                   AI {type} ANALYSIS
@@ -663,7 +643,8 @@ function AnalysisDrawerModal({
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <Sparkles className="size-7 animate-spin text-primary" />
               <p className="mt-3 font-mono text-xs text-muted-foreground">
-                Evaluating filings, profit/loss risk metrics, and active war conflicts for {symbol}...
+                Evaluating filings, profit/loss risk metrics, and active war conflicts for {symbol}
+                ...
               </p>
             </div>
           ) : error ? (
@@ -689,10 +670,10 @@ function AnalysisDrawerModal({
                         warImpact.impactSeverity === "Net Beneficiary"
                           ? "border-emerald-500/40 bg-emerald-500/20 text-emerald-300"
                           : warImpact.impactSeverity === "Neutral / Insulated"
-                          ? "border-cyan-500/40 bg-cyan-500/20 text-cyan-300"
-                          : warImpact.impactSeverity === "Moderate Negative"
-                          ? "border-amber-500/40 bg-amber-500/20 text-amber-300"
-                          : "border-rose-500/40 bg-rose-500/20 text-rose-300"
+                            ? "border-cyan-500/40 bg-cyan-500/20 text-cyan-300"
+                            : warImpact.impactSeverity === "Moderate Negative"
+                              ? "border-amber-500/40 bg-amber-500/20 text-amber-300"
+                              : "border-rose-500/40 bg-rose-500/20 text-rose-300",
                       )}
                     >
                       {warImpact.impactSeverity}
@@ -701,12 +682,18 @@ function AnalysisDrawerModal({
 
                   <div className="grid grid-cols-1 gap-2 text-xs sm:grid-cols-2">
                     <div>
-                      <span className="font-mono text-[9px] uppercase text-muted-foreground">Active Conflict</span>
+                      <span className="font-mono text-[9px] uppercase text-muted-foreground">
+                        Active Conflict
+                      </span>
                       <p className="font-semibold text-foreground">{warImpact.conflictType}</p>
-                      <p className="text-[11px] text-muted-foreground">{warImpact.conflictStatus}</p>
+                      <p className="text-[11px] text-muted-foreground">
+                        {warImpact.conflictStatus}
+                      </p>
                     </div>
                     <div>
-                      <span className="font-mono text-[9px] uppercase text-muted-foreground">War Risk Score</span>
+                      <span className="font-mono text-[9px] uppercase text-muted-foreground">
+                        War Risk Score
+                      </span>
                       <div className="flex items-center gap-2">
                         <span className="font-mono text-sm font-bold text-amber-400">
                           {warImpact.warRiskScorePercent}%
@@ -715,15 +702,17 @@ function AnalysisDrawerModal({
                           {warImpact.warRiskScorePercent <= 30
                             ? "Low Conflict Exposure"
                             : warImpact.warRiskScorePercent <= 60
-                            ? "Moderate Sensitivity"
-                            : "High Vulnerability"}
+                              ? "Moderate Sensitivity"
+                              : "High Vulnerability"}
                         </span>
                       </div>
                     </div>
                   </div>
 
                   <div>
-                    <span className="font-mono text-[9px] uppercase text-muted-foreground">Transmission Channels</span>
+                    <span className="font-mono text-[9px] uppercase text-muted-foreground">
+                      Transmission Channels
+                    </span>
                     <div className="mt-1 flex flex-wrap gap-1">
                       {warImpact.exposureChannels.map((channel: string, cIdx: number) => (
                         <span
@@ -740,7 +729,9 @@ function AnalysisDrawerModal({
                     <span className="font-mono text-[9px] uppercase text-muted-foreground">
                       Operational & Supply Chain Impact
                     </span>
-                    <p className="mt-0.5 text-xs leading-relaxed text-foreground/90">{warImpact.directEffect}</p>
+                    <p className="mt-0.5 text-xs leading-relaxed text-foreground/90">
+                      {warImpact.directEffect}
+                    </p>
                   </div>
 
                   <div className="rounded border border-border/50 bg-background/60 p-2.5">
@@ -759,7 +750,8 @@ function AnalysisDrawerModal({
                 <div className="space-y-3 rounded-lg border border-border/80 bg-secondary/30 p-4">
                   <div className="flex items-center justify-between border-b border-border/40 pb-2">
                     <span className="font-mono text-xs font-bold uppercase tracking-wide text-foreground">
-                      Quantitative {type === "BUY" ? "Profit & Loss Risk Ratio" : "Exit & Protection Metrics"}
+                      Quantitative{" "}
+                      {type === "BUY" ? "Profit & Loss Risk Ratio" : "Exit & Protection Metrics"}
                     </span>
                     <Badge variant="outline" className="font-mono text-[10px]">
                       {riskMetrics.riskLevel}
@@ -808,7 +800,9 @@ function AnalysisDrawerModal({
                   ) : (
                     <div className="grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
                       <div className="rounded bg-background/60 p-2 text-center">
-                        <span className="text-[10px] text-muted-foreground">Recommended Action</span>
+                        <span className="text-[10px] text-muted-foreground">
+                          Recommended Action
+                        </span>
                         <p className="font-mono text-sm font-bold text-foreground">
                           {riskMetrics.recommendationAction}
                         </p>
@@ -832,7 +826,9 @@ function AnalysisDrawerModal({
                         </span>
                       </div>
                       <div className="rounded bg-background/60 p-2 text-center">
-                        <span className="text-[10px] text-muted-foreground">Deterioration Risk</span>
+                        <span className="text-[10px] text-muted-foreground">
+                          Deterioration Risk
+                        </span>
                         <p className="font-mono text-sm font-bold text-foreground">
                           {riskMetrics.riskScorePercent}%
                         </p>
@@ -912,9 +908,7 @@ function EvidenceCitations({ evidence }: { evidence: ChatEvidenceItem[] }) {
                     ({chunk.reportingPeriod})
                   </span>
                 </div>
-                <span className="font-mono text-[9px] text-muted-foreground">
-                  {chunk.source}
-                </span>
+                <span className="font-mono text-[9px] text-muted-foreground">{chunk.source}</span>
               </div>
               <p className="mt-1.5 font-mono text-[11px] leading-relaxed text-muted-foreground">
                 "{chunk.text}"
@@ -942,8 +936,8 @@ function NewsPills({ news }: { news: ChatNewsItem[] }) {
           item.sentiment === "positive"
             ? "border-emerald-500/30 text-emerald-400 bg-emerald-500/10"
             : item.sentiment === "negative"
-            ? "border-rose-500/30 text-rose-400 bg-rose-500/10"
-            : "border-border text-muted-foreground bg-secondary/40";
+              ? "border-rose-500/30 text-rose-400 bg-rose-500/10"
+              : "border-border text-muted-foreground bg-secondary/40";
 
         return (
           <a
@@ -953,7 +947,7 @@ function NewsPills({ news }: { news: ChatNewsItem[] }) {
             rel="noopener noreferrer"
             className={cn(
               "flex max-w-[280px] items-center gap-1 truncate rounded border px-1.5 py-0.5 font-mono text-[10px] transition-colors hover:border-primary/50",
-              sentimentColor
+              sentimentColor,
             )}
             title={item.title}
           >
@@ -972,9 +966,7 @@ function ResearchPage() {
   const { q, session: searchSessionId } = Route.useSearch();
 
   const [sessions, setSessions] = useState<ChatSession[]>([]);
-  const [currentSessionId, setCurrentSessionId] = useState<string | undefined>(
-    searchSessionId
-  );
+  const [currentSessionId, setCurrentSessionId] = useState<string | undefined>(searchSessionId);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -1019,7 +1011,7 @@ function ResearchPage() {
     try {
       const list = await apiClient.getChatSessions();
       setSessions(list);
-      if (!currentSessionId && list.length > 0) {
+      if (!currentSessionId && list.length > 0 && list[0]) {
         // Automatically select the most recent session if available
         setCurrentSessionId(list[0]._id);
       }
@@ -1098,7 +1090,7 @@ function ResearchPage() {
         } else if (result.session) {
           // Update last message in existing session list
           setSessions((prev) =>
-            prev.map((s) => (s._id === result.session._id ? result.session : s))
+            prev.map((s) => (s._id === result.session._id ? result.session : s)),
           );
         }
 
@@ -1108,7 +1100,7 @@ function ResearchPage() {
           return [...filtered, result.userMessage, result.assistantMessage];
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Chat error:", err);
       // Fallback assistant message if network / service fails
       const fallbackMsg: ChatMessage = {
@@ -1134,7 +1126,7 @@ function ResearchPage() {
     return sessions.filter(
       (s) =>
         s.title.toLowerCase().includes(qLower) ||
-        (s.lastMessage && s.lastMessage.toLowerCase().includes(qLower))
+        (s.lastMessage && s.lastMessage.toLowerCase().includes(qLower)),
     );
   }, [sessions, sessionSearch]);
 
@@ -1179,7 +1171,7 @@ function ResearchPage() {
         <div
           className={cn(
             "min-w-0 lg:col-span-3 lg:block",
-            showSessionsDrawer ? "block" : "hidden lg:block"
+            showSessionsDrawer ? "block" : "hidden lg:block",
           )}
         >
           <Panel className="flex h-[75vh] flex-col p-3">
@@ -1192,7 +1184,7 @@ function ResearchPage() {
                 </span>
               </span>
               <Button
-                size="icon-xs"
+                size="icon-sm"
                 variant="ghost"
                 onClick={handleStartNewSession}
                 title="Create New Thread"
@@ -1245,16 +1237,14 @@ function ResearchPage() {
                         "group relative flex cursor-pointer items-start justify-between rounded-md border p-2.5 text-left transition-all",
                         isActive
                           ? "border-primary/50 bg-primary/10 text-foreground"
-                          : "border-transparent bg-secondary/30 text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
+                          : "border-transparent bg-secondary/30 text-muted-foreground hover:bg-secondary/60 hover:text-foreground",
                       )}
                     >
                       {isActive && (
                         <span className="absolute left-1 top-3 size-1.5 rounded-full bg-emerald-400" />
                       )}
                       <div className="min-w-0 flex-1 pl-1.5 pr-2">
-                        <p className="truncate text-xs font-medium text-foreground">
-                          {sess.title}
-                        </p>
+                        <p className="truncate text-xs font-medium text-foreground">{sess.title}</p>
                         {cleanPreview && (
                           <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
                             {cleanPreview}
@@ -1331,9 +1321,7 @@ function ResearchPage() {
               </div>
 
               <div className="flex items-center gap-2">
-                <span className="font-mono text-[10px] text-muted-foreground">
-                  Active Thread:
-                </span>
+                <span className="font-mono text-[10px] text-muted-foreground">Active Thread:</span>
                 <span className="max-w-[200px] truncate font-mono text-[10px] font-semibold text-foreground">
                   {sessions.find((s) => s._id === currentSessionId)?.title ||
                     "New Research Session"}
@@ -1355,8 +1343,8 @@ function ResearchPage() {
                     Ask AssetMind Financial Copilot
                   </h3>
                   <p className="mt-1 max-w-md text-xs leading-relaxed text-muted-foreground">
-                    Analyze Indian equities, check real-time NSE share prices, inspect
-                    verified audited filings from Qdrant, and evaluate risk vs profit metrics.
+                    Analyze Indian equities, check real-time NSE share prices, inspect verified
+                    audited filings from Qdrant, and evaluate risk vs profit metrics.
                   </p>
 
                   <div className="mt-6 w-full max-w-lg">
@@ -1381,9 +1369,7 @@ function ResearchPage() {
                 messages.map((msg, idx) => (
                   <div
                     key={msg._id || idx}
-                    className={
-                      msg.role === "user" ? "flex justify-end" : "flex items-start gap-3"
-                    }
+                    className={msg.role === "user" ? "flex justify-end" : "flex items-start gap-3"}
                   >
                     {msg.role === "assistant" && (
                       <div className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-primary/30 bg-primary/15 text-primary">
@@ -1396,7 +1382,7 @@ function ResearchPage() {
                         "rounded-xl px-4 py-3 text-sm leading-relaxed transition-all",
                         msg.role === "user"
                           ? "max-w-[85%] rounded-br-none border border-primary/30 bg-primary/15 text-foreground sm:max-w-[75%]"
-                          : "w-full max-w-[95%] rounded-tl-none border border-border/80 bg-secondary/35 shadow-sm sm:max-w-[90%]"
+                          : "w-full max-w-[95%] rounded-tl-none border border-border/80 bg-secondary/35 shadow-sm sm:max-w-[90%]",
                       )}
                     >
                       {/* Embedded Stock Snapshot Cards if Assistant referenced stocks */}
@@ -1424,18 +1410,14 @@ function ResearchPage() {
                       )}
 
                       {/* Vector Filing Evidence Citations */}
-                      {msg.role === "assistant" &&
-                        msg.evidence &&
-                        msg.evidence.length > 0 && (
-                          <EvidenceCitations evidence={msg.evidence} />
-                        )}
+                      {msg.role === "assistant" && msg.evidence && msg.evidence.length > 0 && (
+                        <EvidenceCitations evidence={msg.evidence} />
+                      )}
 
                       {/* News Sentiment Highlights */}
                       {msg.role === "assistant" &&
                         msg.newsHighlights &&
-                        msg.newsHighlights.length > 0 && (
-                          <NewsPills news={msg.newsHighlights} />
-                        )}
+                        msg.newsHighlights.length > 0 && <NewsPills news={msg.newsHighlights} />}
 
                       {/* Message Footer: Timestamp, Model Badge & Copy Button */}
                       <div className="mt-3 flex items-center justify-between border-t border-border/30 pt-1.5 text-[9px] text-muted-foreground">
@@ -1448,7 +1430,8 @@ function ResearchPage() {
                           </span>
                           {msg.role === "assistant" && (
                             <span className="font-mono text-primary/70">
-                              {msg.modelUsed || "gpt-oss:20b"} • {((msg.confidenceScore || 0.9) * 100).toFixed(0)}% confidence
+                              {msg.modelUsed || "gpt-oss:20b"} •{" "}
+                              {((msg.confidenceScore || 0.9) * 100).toFixed(0)}% confidence
                             </span>
                           )}
                         </div>
@@ -1488,7 +1471,8 @@ function ResearchPage() {
                     <div className="flex items-center gap-2">
                       <span className="size-2 animate-ping rounded-full bg-primary" />
                       <span className="font-mono">
-                        Retrieving real-time quotes, querying Qdrant vector evidence & reasoning with Ollama 20B...
+                        Retrieving real-time quotes, querying Qdrant vector evidence & reasoning
+                        with Ollama 20B...
                       </span>
                     </div>
                   </div>
@@ -1504,7 +1488,9 @@ function ResearchPage() {
                 className="flex items-center gap-1.5 overflow-x-auto whitespace-nowrap border-t border-border/60 bg-secondary/10 px-4 py-2 no-scrollbar"
                 style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
               >
-                <span className="font-mono text-[10px] text-muted-foreground">Prompt Suggestions:</span>
+                <span className="font-mono text-[10px] text-muted-foreground">
+                  Prompt Suggestions:
+                </span>
                 {QUICK_PROMPTS.map((promptText) => (
                   <button
                     key={promptText}

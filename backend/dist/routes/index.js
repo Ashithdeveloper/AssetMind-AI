@@ -14,6 +14,7 @@ const company_routes_1 = require("../modules/companies/company.routes");
 const analysis_routes_1 = require("../modules/analysis/analysis.routes");
 const realtime_routes_1 = require("../modules/realtime/realtime.routes");
 const chat_routes_1 = require("../modules/chat/chat.routes");
+const screener_routes_1 = require("../modules/screener/screener.routes");
 const apiResponse_1 = require("../utils/apiResponse");
 const router = (0, express_1.Router)();
 // Health check endpoint
@@ -35,5 +36,6 @@ router.use('/companies', company_routes_1.companyRoutes);
 router.use('/analysis', analysis_routes_1.analysisRoutes);
 router.use('/realtime', realtime_routes_1.realtimeRoutes);
 router.use('/chat', chat_routes_1.chatRoutes);
+router.use('/screener', screener_routes_1.screenerRoutes);
 exports.apiRoutes = router;
 //# sourceMappingURL=index.js.map

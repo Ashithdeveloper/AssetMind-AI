@@ -240,6 +240,56 @@ export interface RealTimePrice {
   lastUpdated: string;
 }
 
+export interface ScreenerSearchResultItem {
+  id: number;
+  name: string;
+  symbol: string;
+  slug: string;
+  url: string;
+  isScraped: boolean;
+  marketCap?: number | null | undefined;
+  latestPrice?: number | null | undefined;
+  changePercent?: number | null | undefined;
+  sector?: string | null | undefined;
+  pe?: number | null | undefined;
+  bseCode?: string | null | undefined;
+  nseSymbol?: string | null | undefined;
+}
+
+export interface ScreenerSearchResponse {
+  query: string;
+  total: number;
+  source: string;
+  results: ScreenerSearchResultItem[];
+}
+
+export interface ScreenerScrapeResponse {
+  message: string;
+  company: {
+    id: string;
+    companyName: string;
+    symbol: string;
+    nseSymbol: string;
+    bseCode?: string;
+    exchange: string;
+    country: string;
+    sector: string;
+    industry: string;
+    website?: string;
+    description?: string;
+    marketCap?: number | null;
+    latestPrice?: number | null;
+    changePercent?: number | null;
+    pe?: number | null;
+    roe?: number | null;
+    roce?: number | null;
+    bookValue?: number | null;
+    dividendYield?: number | null;
+    source: string;
+    scrapedAt: string;
+  };
+}
+
 export interface LiveQuote extends RealTimePrice {
   symbol: string;
   companyName: string;
@@ -603,6 +653,22 @@ export const apiClient = {
     return request<{ success: boolean }>(`/chat/sessions/${encodeURIComponent(sessionId)}`, {
       method: 'DELETE',
     });
+  },
+
+  // ── Screener.in Live Search & On-Demand Scraping ─────────────────────────
+  searchScreener: async (query: string): Promise<ScreenerSearchResponse> => {
+    return request<ScreenerSearchResponse>(`/screener/search?q=${encodeURIComponent(query)}`);
+  },
+
+  scrapeScreenerCompany: async (symbol: string, force = false): Promise<ScreenerScrapeResponse> => {
+    return request<ScreenerScrapeResponse>('/screener/scrape', {
+      method: 'POST',
+      body: JSON.stringify({ symbol, force }),
+    });
+  },
+
+  getScreenerCompany: async (symbol: string): Promise<ScreenerScrapeResponse> => {
+    return request<ScreenerScrapeResponse>(`/screener/company/${encodeURIComponent(symbol)}`);
   },
 };
 
