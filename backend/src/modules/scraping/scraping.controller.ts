@@ -102,10 +102,7 @@ export class ScrapingController {
       const results: any[] = [];
       for (const comp of discovered) {
         try {
-          const sources =
-            comp.country === 'India'
-              ? ['screener-in', 'yahoo-finance']
-              : ['yahoo-finance', 'stockanalysis', 'sec-edgar'];
+          const sources = ['screener-in', 'yahoo-finance'];
 
           const job = await ScrapingService.triggerScrape({
             symbol: comp.symbol,

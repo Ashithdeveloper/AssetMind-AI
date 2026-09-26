@@ -7,7 +7,19 @@ import { companies, fmtChange, fmtINR, useWatchlist } from "@/lib/market-data";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/watchlist")({
-  head: () => ({ meta: [{ title: "Watchlist — AssetMind AI" }, { name: "description", content: "Track the companies you follow in one place." }, { property: "og:title", content: "Watchlist — AssetMind AI" }, { property: "og:description", content: "Your saved companies with live-style price moves." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
+  head: () => ({
+    meta: [
+      { title: "Watchlist — AssetMind AI" },
+      {
+        name: "description",
+        content: "Track the companies you follow in one place.",
+      },
+      { property: "og:title", content: "Watchlist — AssetMind AI" },
+      { property: "og:description", content: "Your saved companies with live-style price moves." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: WatchlistPage,
 });
 

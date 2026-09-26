@@ -104,4 +104,40 @@ export class CompanyController {
       next(err);
     }
   }
+
+  /**
+   * GET /api/companies/:symbol/statements
+   * Full quarterly, annual P&L, balance sheet, and cash flow statements from Screener.in
+   */
+  public static async getStatements(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const symbol = String(req.params.symbol || '');
+      if (!symbol.trim()) {
+        throw new AppError('Stock symbol is required', 400, 'SYMBOL_REQUIRED');
+      }
+
+      const statements = await CompanyService.getStatements(symbol);
+      sendSuccess(res, statements, `Financial statements for ${symbol} retrieved successfully`, 200);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  /**
+   * POST /api/companies/:symbol/refresh
+   * On-demand live refresh of company fundamentals and statements directly from Screener.in
+   */
+  public static async refreshCompany(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const symbol = String(req.params.symbol || '');
+      if (!symbol.trim()) {
+        throw new AppError('Stock symbol is required', 400, 'SYMBOL_REQUIRED');
+      }
+
+      const refreshed = await CompanyService.refreshCompany(symbol);
+      sendSuccess(res, refreshed, `Successfully refreshed ${symbol} from Screener.in`, 200);
+    } catch (err) {
+      next(err);
+    }
+  }
 }

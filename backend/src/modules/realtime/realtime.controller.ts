@@ -14,7 +14,7 @@
 
 import { Request, Response, NextFunction } from 'express';
 import { fetchLiveQuote } from './liveQuote.service';
-import { fetchNewsForSymbol, fetchMarketNews } from './news.service';
+import { fetchNewsForSymbol, fetchMarketNews, analyzeCompanyNews } from './news.service';
 import { getAllLatestQuotes, getLatestQuote, priceEventBus } from './liveRefresh.scheduler';
 import { sendSuccess, AppError } from '../../utils/apiResponse';
 
@@ -70,6 +70,30 @@ export class RealTimeController {
           lastFetched: new Date().toISOString(),
         },
         `News for ${clean} retrieved (${articles.length} articles)`,
+        200
+      );
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  /**
+   * GET /api/realtime/:symbol/news-analysis
+   * AI-powered synthesis of all recent news for a company
+   */
+  static async getCompanyNewsAnalysis(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { symbol } = req.params;
+      const companyName = req.query.name as string | undefined;
+      const clean = String(symbol || '').trim().toUpperCase();
+      if (!clean) throw new AppError('Symbol is required', 400, 'SYMBOL_REQUIRED');
+
+      const analysis = await analyzeCompanyNews(clean, companyName);
+
+      sendSuccess(
+        res,
+        analysis,
+        `AI news analysis for ${clean} completed successfully`,
         200
       );
     } catch (err) {

@@ -53,3 +53,40 @@ export interface RealTimeDataResponse {
   news: NewsArticle[];
   relatedIndices?: MarketSummary[];
 }
+
+export interface CompanyNewsAnalysis {
+  symbol: string;
+  companyName?: string;
+  totalArticles: number;
+  sentimentBreakdown: {
+    positivePercent: number;
+    neutralPercent: number;
+    negativePercent: number;
+    overallSentiment: 'Bullish' | 'Somewhat Bullish' | 'Neutral' | 'Somewhat Bearish' | 'Bearish';
+    score: number;
+  };
+  headlineTakeaway: string;
+  shortSummary: string;
+  keyCatalysts: {
+    positive: string[];
+    concerns: string[];
+  };
+  marketImpact: {
+    shortTerm: {
+      outlook: 'Positive' | 'Neutral' | 'Negative' | 'Volatile';
+      description: string;
+    };
+    mediumTerm: {
+      outlook: 'Positive' | 'Neutral' | 'Negative' | 'Consolidating';
+      description: string;
+    };
+  };
+  analyzedArticles: {
+    title: string;
+    source: string;
+    publishedAt: string;
+    sentiment: string;
+    url: string;
+  }[];
+  generatedAt: string;
+}

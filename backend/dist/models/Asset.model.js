@@ -43,6 +43,17 @@ const AssetSchema = new mongoose_1.Schema({
         trim: true,
         index: true,
     },
+    nseSymbol: {
+        type: String,
+        uppercase: true,
+        trim: true,
+        index: true,
+    },
+    bseCode: {
+        type: String,
+        trim: true,
+        index: true,
+    },
     companyName: {
         type: String,
         required: true,
@@ -52,11 +63,17 @@ const AssetSchema = new mongoose_1.Schema({
     exchange: {
         type: String,
         trim: true,
-        default: 'UNKNOWN',
+        default: 'NSE',
     },
     country: {
         type: String,
         trim: true,
+        default: 'India',
+    },
+    currency: {
+        type: String,
+        trim: true,
+        default: 'INR',
     },
     sector: {
         type: String,
@@ -77,6 +94,20 @@ const AssetSchema = new mongoose_1.Schema({
     website: {
         type: String,
         trim: true,
+    },
+    dataSource: {
+        type: String,
+        trim: true,
+        default: 'Screener.in',
+    },
+    currentPrice: {
+        type: Number,
+    },
+    marketCapitalization: {
+        type: Number,
+    },
+    lastScrapedAt: {
+        type: Date,
     },
 }, {
     timestamps: true,

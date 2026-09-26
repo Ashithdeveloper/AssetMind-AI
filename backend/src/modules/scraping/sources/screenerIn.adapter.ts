@@ -41,6 +41,9 @@ export class ScreenerInAdapter extends BaseAdapter implements SourceAdapter {
 
   public buildUrl(symbol: string): string {
     const cleanSym = encodeURIComponent(symbol.trim().toUpperCase().replace(/\.NS$|\.BO$/i, ''));
+    if (cleanSym === 'SBILIFE') {
+      return `https://www.screener.in/company/${cleanSym}/`;
+    }
     return `https://www.screener.in/company/${cleanSym}/consolidated/`;
   }
 

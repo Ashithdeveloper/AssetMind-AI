@@ -57,16 +57,16 @@ async function runAllTests() {
         // TEST 1: Document Generation Service
         // -------------------------------------------------------------
         console.log('\n--- 1. Document Generation Test ---');
-        const docsAAPL = await documentBuilder_service_1.DocumentBuilderService.buildDocumentsForSymbol('AAPL');
-        assert(docsAAPL.length > 0, 'Generates documents for symbol AAPL', `Generated ${docsAAPL.length} documents`);
-        const docTypesFound = new Set(docsAAPL.map((d) => d.documentType));
+        const docsTCS = await documentBuilder_service_1.DocumentBuilderService.buildDocumentsForSymbol('TCS');
+        assert(docsTCS.length > 0, 'Generates documents for symbol TCS', `Generated ${docsTCS.length} documents`);
+        const docTypesFound = new Set(docsTCS.map((d) => d.documentType));
         console.log(`  Found document types: ${Array.from(docTypesFound).join(', ')}`);
         assert(docTypesFound.has('company_profile'), 'Includes company_profile document');
         assert(docTypesFound.has('financial_statement'), 'Includes financial_statement document');
         assert(docTypesFound.has('financial_ratios'), 'Includes financial_ratios document');
         assert(docTypesFound.has('stock_price_history'), 'Includes stock_price_history document');
         // Verify unit and original value preservation
-        const statementDoc = docsAAPL.find((d) => d.documentType === 'financial_statement');
+        const statementDoc = docsTCS.find((d) => d.documentType === 'financial_statement');
         assert(!!statementDoc, 'Financial statement document exists');
         assert(statementDoc.financialMetrics.length > 0, 'Contains un-fabricated financial metrics');
         assert(statementDoc.content.includes('| Metric Name | Value | Unit |'), 'Contains structured financial table');
@@ -74,17 +74,17 @@ async function runAllTests() {
         // TEST 2: Chunking & Metadata Generation
         // -------------------------------------------------------------
         console.log('\n--- 2. Chunking & Metadata Test ---');
-        const chunksAAPL = chunking_service_1.ChunkingService.chunkDocuments(docsAAPL, { chunkSize: 700, chunkOverlap: 100 });
-        assert(chunksAAPL.length > 0, 'Splits documents into structured chunks', `Total chunks: ${chunksAAPL.length}`);
-        const firstChunk = chunksAAPL[0];
+        const chunksTCS = chunking_service_1.ChunkingService.chunkDocuments(docsTCS, { chunkSize: 700, chunkOverlap: 100 });
+        assert(chunksTCS.length > 0, 'Splits documents into structured chunks', `Total chunks: ${chunksTCS.length}`);
+        const firstChunk = chunksTCS[0];
         assert(!!firstChunk.chunkId, 'Chunk has unique chunkId', firstChunk.chunkId);
         assert(firstChunk.metadata.domain === 'stocks', 'Metadata domain is "stocks"');
-        assert(firstChunk.metadata.symbol === 'AAPL', 'Metadata symbol is AAPL');
+        assert(firstChunk.metadata.symbol === 'TCS', 'Metadata symbol is TCS');
         assert(!!firstChunk.metadata.companyName, 'Metadata has companyName', firstChunk.metadata.companyName);
         assert(!!firstChunk.metadata.documentType, 'Metadata has documentType', firstChunk.metadata.documentType);
         assert(!!firstChunk.metadata.reportingPeriod, 'Metadata has reportingPeriod', firstChunk.metadata.reportingPeriod);
         assert(!!firstChunk.metadata.source, 'Metadata has source info', firstChunk.metadata.source);
-        assert(firstChunk.content.includes('[Asset: AAPL'), 'Chunk contains context header for retrieval');
+        assert(firstChunk.content.includes('[Asset: TCS'), 'Chunk contains context header for retrieval');
         // -------------------------------------------------------------
         // TEST 3: Embedding Generation (BAAI/bge-small-en-v1.5)
         // -------------------------------------------------------------
@@ -92,13 +92,13 @@ async function runAllTests() {
         const embeddingService = embedding_service_1.BgeSmallEmbeddingService.getInstance();
         assert(embeddingService.getModelName() === 'BAAI/bge-small-en-v1.5', 'Uses BAAI/bge-small-en-v1.5 model');
         assert(embeddingService.getDimension() === 384, 'Vector dimension is 384');
-        const sampleText = 'Apple Inc reported annual revenue and quarterly free cash flow.';
+        const sampleText = 'Tata Consultancy Services reported annual revenue and quarterly free cash flow.';
         const vector = await embeddingService.generateEmbedding(sampleText);
         assert(vector.length === 384, 'Generated vector length is exactly 384');
         // Verify batch generation and caching
         const batchVectors = await embeddingService.generateBatchEmbeddings([
-            'Apple financial statements',
-            'Microsoft operating income',
+            'Tata Consultancy Services financial statements',
+            'Infosys operating income',
         ]);
         assert(batchVectors.length === 2 && batchVectors[0].length === 384, 'Batch generation operates correctly');
         // -------------------------------------------------------------
@@ -107,41 +107,41 @@ async function runAllTests() {
         console.log('\n--- 4. Qdrant Storage Test ---');
         const qdrantService = qdrant_service_1.QdrantService.getInstance();
         await qdrantService.ensureCollectionInitialized();
-        // Index AAPL chunks
-        const embeddedAAPL = chunksAAPL.map((c, i) => ({
+        // Index TCS chunks
+        const embeddedTCS = chunksTCS.map((c, i) => ({
             ...c,
             embedding: vector, // Use valid 384-dim vector for test
         }));
-        const upsertRes = await qdrantService.upsertChunks(embeddedAAPL.slice(0, 5));
+        const upsertRes = await qdrantService.upsertChunks(embeddedTCS.slice(0, 5));
         assert(upsertRes.count === 5, 'Upserted chunks into Qdrant collection', `Count: ${upsertRes.count}`);
         const stats = await qdrantService.getStats();
         assert(stats.pointsCount >= 5, 'Qdrant collection contains stored points', `Points count: ${stats.pointsCount}`);
         // -------------------------------------------------------------
-        // TEST 5 & 10: Data Update & Synchronization (AAPL & MSFT)
+        // TEST 5 & 10: Data Update & Synchronization (TCS & INFY)
         // -------------------------------------------------------------
         console.log('\n--- 5 & 10. Data Update Synchronization Test ---');
-        const syncResultAAPL = await ragSync_service_1.RagSyncService.syncAssetBySymbol('AAPL');
-        assert(syncResultAAPL.status === 'INDEXED', 'Synchronized AAPL into Qdrant', `${syncResultAAPL.chunksCount} chunks indexed`);
-        const syncResultMSFT = await ragSync_service_1.RagSyncService.syncAssetBySymbol('MSFT');
-        assert(syncResultMSFT.status === 'INDEXED', 'Synchronized MSFT into Qdrant', `${syncResultMSFT.chunksCount} chunks indexed`);
+        const syncResultTCS = await ragSync_service_1.RagSyncService.syncAssetBySymbol('TCS');
+        assert(syncResultTCS.status === 'INDEXED', 'Synchronized TCS into Qdrant', `${syncResultTCS.chunksCount} chunks indexed`);
+        const syncResultINFY = await ragSync_service_1.RagSyncService.syncAssetBySymbol('INFY');
+        assert(syncResultINFY.status === 'INDEXED', 'Synchronized INFY into Qdrant', `${syncResultINFY.chunksCount} chunks indexed`);
         // -------------------------------------------------------------
         // TEST 6: Hybrid Retrieval (Dense Vector + Keyword Search)
         // -------------------------------------------------------------
         console.log('\n--- 6. Hybrid Retrieval Test ---');
         const retrievalHits = await hybridRetrieval_service_1.HybridRetrievalService.retrieve({
-            query: 'Apple revenue and net income',
-            symbol: 'AAPL',
+            query: 'Tata Consultancy Services revenue and net income',
+            symbol: 'TCS',
             limit: 8,
         });
         assert(retrievalHits.length > 0, 'Retrieved financial evidence chunks', `Found ${retrievalHits.length} chunks`);
-        assert(retrievalHits[0].symbol === 'AAPL', 'Retrieved chunks strictly match requested symbol AAPL');
+        assert(retrievalHits[0].symbol === 'TCS', 'Retrieved chunks strictly match requested symbol TCS');
         assert(retrievalHits[0].score > 0, 'Combined score calculated', `Top score: ${retrievalHits[0].score}`);
         // -------------------------------------------------------------
         // TEST 7: Re-ranking Service
         // -------------------------------------------------------------
         console.log('\n--- 7. Re-ranking Test ---');
         const reranker = new reranking_service_1.FinancialRelevanceReranker();
-        const rerankedHits = await reranker.rerank('Apple revenue and net income', 'AAPL', retrievalHits, 5);
+        const rerankedHits = await reranker.rerank('Tata Consultancy Services revenue and net income', 'TCS', retrievalHits, 5);
         assert(rerankedHits.length > 0, 'Re-ranking returned prioritized chunks', `Count: ${rerankedHits.length}`);
         assert(rerankedHits[0].rerankScore >= rerankedHits[rerankedHits.length - 1].rerankScore, 'Results sorted by rerankScore descending');
         assert(!!rerankedHits[0].relevanceExplanation, 'Re-ranking provided explanation', rerankedHits[0].relevanceExplanation);
@@ -149,7 +149,7 @@ async function runAllTests() {
         // TEST 8: Evidence Context Construction
         // -------------------------------------------------------------
         console.log('\n--- 8. Evidence Context Construction Test ---');
-        const evidenceContext = evidenceContext_service_1.EvidenceContextBuilderService.buildContext('What is Apple revenue and free cash flow?', 'AAPL', 'Apple Inc.', rerankedHits);
+        const evidenceContext = evidenceContext_service_1.EvidenceContextBuilderService.buildContext('What is TCS revenue and free cash flow?', 'TCS', 'Tata Consultancy Services Limited', rerankedHits);
         assert(evidenceContext.formattedContext.includes('=== TARGET ASSET IDENTITY ==='), 'Includes target asset header');
         assert(evidenceContext.formattedContext.includes('=== VERIFIED FINANCIAL EVIDENCE'), 'Includes verified evidence section');
         assert(evidenceContext.sources.length > 0, 'Tracks unique sources', `Sources count: ${evidenceContext.sources.length}`);
@@ -161,27 +161,27 @@ async function runAllTests() {
         const llmService = llm_service_1.LlmService.getInstance();
         const aiAnswer = await llmService.generateAnswer(evidenceContext);
         assert(!!aiAnswer.answer, 'Generated financial answer from Qwen3-4B', `Answer length: ${aiAnswer.answer.length} chars`);
-        assert(aiAnswer.symbol === 'AAPL', 'Response is linked to AAPL');
+        assert(aiAnswer.symbol === 'TCS', 'Response is linked to TCS');
         assert(aiAnswer.sources.length > 0, 'Includes source attribution');
         console.log(`\n  💬 Model Answer Preview:\n  ${aiAnswer.answer.slice(0, 250)}...\n`);
         // -------------------------------------------------------------
         // TEST 10: Multi-Company Asset Isolation (Zero Cross-Contamination)
         // -------------------------------------------------------------
         console.log('\n--- 10. Multi-Company Asset Isolation Test ---');
-        const msftRetrieval = await hybridRetrieval_service_1.HybridRetrievalService.retrieve({
-            query: 'Microsoft cloud revenue and net income',
-            symbol: 'MSFT',
+        const infyRetrieval = await hybridRetrieval_service_1.HybridRetrievalService.retrieve({
+            query: 'Infosys cloud revenue and net income',
+            symbol: 'INFY',
             limit: 10,
         });
-        const anyAppleInMsft = msftRetrieval.some((r) => r.symbol === 'AAPL');
-        assert(!anyAppleInMsft, 'Zero AAPL records present in MSFT retrieval');
-        const appleRetrieval = await hybridRetrieval_service_1.HybridRetrievalService.retrieve({
-            query: 'Apple iPhone revenue and cash flow',
-            symbol: 'AAPL',
+        const anyTcsInInfy = infyRetrieval.some((r) => r.symbol === 'TCS');
+        assert(!anyTcsInInfy, 'Zero TCS records present in INFY retrieval');
+        const tcsRetrieval = await hybridRetrieval_service_1.HybridRetrievalService.retrieve({
+            query: 'Tata Consultancy Services revenue and cash flow',
+            symbol: 'TCS',
             limit: 10,
         });
-        const anyMsftInApple = appleRetrieval.some((r) => r.symbol === 'MSFT');
-        assert(!anyMsftInApple, 'Zero MSFT records present in AAPL retrieval');
+        const anyInfyInTcs = tcsRetrieval.some((r) => r.symbol === 'INFY');
+        assert(!anyInfyInTcs, 'Zero INFY records present in TCS retrieval');
         console.log('\n===============================================================');
         console.log(`🎉 ALL ${passedTests}/${totalTests} TESTS PASSED SUCCESSFULLY!`);
         console.log('===============================================================\n');

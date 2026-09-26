@@ -67,6 +67,24 @@ class RealTimeController {
         }
     }
     /**
+     * GET /api/realtime/:symbol/news-analysis
+     * AI-powered synthesis of all recent news for a company
+     */
+    static async getCompanyNewsAnalysis(req, res, next) {
+        try {
+            const { symbol } = req.params;
+            const companyName = req.query.name;
+            const clean = String(symbol || '').trim().toUpperCase();
+            if (!clean)
+                throw new apiResponse_1.AppError('Symbol is required', 400, 'SYMBOL_REQUIRED');
+            const analysis = await (0, news_service_1.analyzeCompanyNews)(clean, companyName);
+            (0, apiResponse_1.sendSuccess)(res, analysis, `AI news analysis for ${clean} completed successfully`, 200);
+        }
+        catch (err) {
+            next(err);
+        }
+    }
+    /**
      * GET /api/realtime/:symbol/full
      * Combined: live quote + news for analysis context
      */

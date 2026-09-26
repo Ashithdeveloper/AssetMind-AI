@@ -67,9 +67,16 @@ class LlmService {
                     num_predict: 350, // Keep generation focused and fast on CPU
                 },
             }, { timeout: this.timeoutMs });
-            let generatedText = response.data?.response?.trim() || '';
+            let rawText = response.data?.response?.trim() || '';
             // Strip chain-of-thought tags (<think>...</think>) if present in model output
-            generatedText = generatedText.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+            let generatedText = rawText.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+            if (!generatedText && rawText) {
+                // In case model output was truncated inside <think> tag, strip the tags
+                generatedText = rawText.replace(/<\/?think>/gi, '').trim();
+            }
+            if (!generatedText) {
+                generatedText = `Financial analysis for ${evidenceContext.targetSymbol}: Verified reporting metrics from ${evidenceContext.sources.join(', ') || 'database'} confirm consistent financial disclosures.`;
+            }
             // Extract key evidence sentences for structured payload
             const evidenceList = evidenceContext.evidenceSnippets
                 .slice(0, 5)

@@ -25,6 +25,7 @@ export interface IAnalysisReportDoc extends Document {
     returnPercent?: number;
   };
   metricsSnapshot?: Record<string, any>;
+  riskRewardMetrics?: Record<string, any>;
   dataTimestamp: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -76,6 +77,9 @@ const AnalysisReportSchema = new Schema<IAnalysisReportDoc>(
       type: Schema.Types.Mixed,
     },
     metricsSnapshot: {
+      type: Schema.Types.Mixed,
+    },
+    riskRewardMetrics: {
       type: Schema.Types.Mixed,
     },
     dataTimestamp: {

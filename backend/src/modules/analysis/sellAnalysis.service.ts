@@ -5,12 +5,32 @@ import { HybridRetrievalService } from '../rag/services/hybridRetrieval.service'
 import { FinancialRelevanceReranker } from '../rag/services/reranking.service';
 import { AnalysisReport } from '../../models/AnalysisReport.model';
 import { Asset } from '../../models/Asset.model';
+import { GeopoliticalRiskEngine, WarConflictImpact } from './geopoliticalRisk.engine';
 
 export interface PersonalInvestmentInput {
   purchasePrice?: number;
   quantity?: number;
   investmentDate?: string;
   portfolioValue?: number;
+}
+
+export interface SellRiskRewardMetrics {
+  currentPrice: number;
+  purchasePrice?: number;
+  unrealizedPnlPercent: number | null;
+  isProfitable?: boolean;
+  profitLockInPercent: number;
+  downsideLossPercent: number;
+  upsideRecoveryPercent: number;
+  riskScorePercent: number;
+  riskLevel: 'Low Risk (Hold)' | 'Moderate Risk (Monitor)' | 'High Risk (Trim/Hedge)' | 'Severe Risk (Exit)';
+  exitTriggerPrice: number;
+  targetRecoveryPrice: number;
+  riskRewardRatio: number;
+  recommendationAction: 'HOLD' | 'TRIM' | 'EXIT' | 'TAKE_PROFIT';
+  recommendationSummary: string;
+  rationale: string;
+  warConflictImpact?: WarConflictImpact;
 }
 
 export class SellAnalysisService {
@@ -109,20 +129,138 @@ export class SellAnalysisService {
       `ROE: ${financials.returnOnEquity.value !== null ? `${financials.returnOnEquity.value}%` : 'N/A'}`,
     ].join('\n');
 
+    // ─── Quantitative Exit Risk, Profit Protection & Loss Thresholds ───
+    const currentPriceNum = profile.latestSharePrice ?? (priceHistory.data && priceHistory.data.length > 0 ? Number(priceHistory.data[priceHistory.data.length - 1].close) : 100);
+    const purchasePrice = investorInput?.purchasePrice;
+    const hasPurchase = purchasePrice !== undefined && purchasePrice > 0;
+    const unrealizedPnlPercent = hasPurchase ? Number((((currentPriceNum - purchasePrice) / purchasePrice) * 100).toFixed(2)) : null;
+    const isProfitable = hasPurchase ? currentPriceNum >= purchasePrice : undefined;
+
+    const roe = financials.returnOnEquity?.value ?? 15;
+    const debtToEquity = financials.debtToEquity?.value ?? 0.5;
+    const netProfitMargin = financials.profitability?.netProfitMargin?.value ?? 10;
+    const fcf = financials.freeCashFlow?.value ?? 0;
+
+    // Downside Risk Loss %: If position deteriorates further or support breaks
+    let downsideBuffer = 0.10;
+    if (debtToEquity > 1.0) downsideBuffer += 0.04;
+    if (debtToEquity > 2.0) downsideBuffer += 0.05;
+    if (fcf < 0) downsideBuffer += 0.04;
+    if (netProfitMargin < 5) downsideBuffer += 0.03;
+    if (unrealizedPnlPercent !== null && unrealizedPnlPercent < -15) downsideBuffer += 0.04;
+
+    const downsideLossPercent = -Math.max(6.0, Math.min(30.0, Number((downsideBuffer * 100).toFixed(2))));
+    const exitTriggerPrice = Number((currentPriceNum * (1 + downsideLossPercent / 100)).toFixed(2));
+
+    // Upside Rebound / Recovery %: Potential bounce back
+    let reboundBuffer = 0.08;
+    if (debtToEquity < 0.6) reboundBuffer += 0.03;
+    if (roe > 15) reboundBuffer += 0.03;
+    if (fcf > 0) reboundBuffer += 0.02;
+    if (debtToEquity > 1.5) reboundBuffer -= 0.03;
+
+    const upsideRecoveryPercent = Math.max(4.0, Math.min(22.0, Number((reboundBuffer * 100).toFixed(2))));
+    const targetRecoveryPrice = Number((currentPriceNum * (1 + upsideRecoveryPercent / 100)).toFixed(2));
+
+    // Capital Risk Score % (0-100%)
+    let riskCalc = 25;
+    if (debtToEquity > 0.8) riskCalc += 18;
+    if (debtToEquity > 1.8) riskCalc += 15;
+    if (fcf <= 0) riskCalc += 16;
+    if (netProfitMargin < 8) riskCalc += 12;
+    if (netProfitMargin < 0) riskCalc += 18;
+    if (unrealizedPnlPercent !== null) {
+      if (unrealizedPnlPercent < 0) {
+        riskCalc += Math.min(20, Math.abs(unrealizedPnlPercent) * 0.8);
+      } else if (unrealizedPnlPercent > 40) {
+        riskCalc += 10;
+      }
+    }
+    const riskScorePercent = Math.max(10, Math.min(95, Math.round(riskCalc)));
+
+    const riskLevel: 'Low Risk (Hold)' | 'Moderate Risk (Monitor)' | 'High Risk (Trim/Hedge)' | 'Severe Risk (Exit)' =
+      riskScorePercent <= 35 ? 'Low Risk (Hold)' :
+      riskScorePercent <= 60 ? 'Moderate Risk (Monitor)' :
+      riskScorePercent <= 78 ? 'High Risk (Trim/Hedge)' : 'Severe Risk (Exit)';
+
+    let recommendationAction: 'HOLD' | 'TRIM' | 'EXIT' | 'TAKE_PROFIT' = 'HOLD';
+    if (riskScorePercent > 78) {
+      recommendationAction = 'EXIT';
+    } else if (isProfitable && (unrealizedPnlPercent ?? 0) >= 25 && riskScorePercent > 50) {
+      recommendationAction = 'TAKE_PROFIT';
+    } else if (riskScorePercent > 60 || (unrealizedPnlPercent !== null && unrealizedPnlPercent < -15)) {
+      recommendationAction = 'TRIM';
+    }
+
+    const profitLockInPercent = isProfitable && (unrealizedPnlPercent ?? 0) > 0 ? (unrealizedPnlPercent ?? 0) : 0;
+    const riskRewardRatio = Number((Math.abs(downsideLossPercent) / Math.max(upsideRecoveryPercent, 0.1)).toFixed(2));
+
+    const recommendationSummary =
+      recommendationAction === 'EXIT'
+        ? `High capital risk of ${riskScorePercent}%: Potential downside loss of ${downsideLossPercent}% indicates stop-loss exit or capital preservation at ₹${exitTriggerPrice}.`
+        : recommendationAction === 'TAKE_PROFIT'
+        ? `Profit lock-in favorable: Realized gain of +${profitLockInPercent}% can be protected against ${downsideLossPercent}% downside risk.`
+        : recommendationAction === 'TRIM'
+        ? `Elevated risk of ${riskScorePercent}%: Downside loss exposure of ${downsideLossPercent}% warrants partial trim with trailing stop at ₹${exitTriggerPrice}.`
+        : `Manageable risk of ${riskScorePercent}%: Upside recovery of +${upsideRecoveryPercent}% (Target ₹${targetRecoveryPrice}) justifies holding with trailing stop at ₹${exitTriggerPrice}.`;
+
+    // Geopolitical & War Conflict Impact
+    const warConflictImpact = GeopoliticalRiskEngine.evaluateWarImpact(
+      cleanSym,
+      profile.sector,
+      profile.industry,
+      profile.companyName
+    );
+
+    const riskRewardMetrics: SellRiskRewardMetrics = {
+      currentPrice: currentPriceNum,
+      purchasePrice,
+      unrealizedPnlPercent,
+      isProfitable,
+      profitLockInPercent,
+      downsideLossPercent,
+      upsideRecoveryPercent,
+      riskScorePercent,
+      riskLevel,
+      exitTriggerPrice,
+      targetRecoveryPrice,
+      riskRewardRatio,
+      recommendationAction,
+      recommendationSummary,
+      rationale: recommendationSummary,
+      warConflictImpact,
+    };
+
     const prompt = [
       `You are an institutional risk & sell-side equity analyst at AssetMind AI. Produce an objective, evidence-based SELL ANALYSIS for ${profile.companyName} (${cleanSym}).`,
       `CRITICAL GUIDELINES:`,
       `1. Clearly distinguish VERIFIED FACTS from EVIDENCE-BASED INTERPRETATIONS and POTENTIAL EXPLANATIONS.`,
-      `2. Identify any MISSING INFORMATION explicitly.`,
-      `3. DO NOT automatically advise the user to sell; present a balanced risk assessment.`,
-      `4. Investigate the 4 core deterioration categories:`,
+      `2. Explicitly analyze the Risk %, Profit % (Unrealized/Lock-in: ${unrealizedPnlPercent !== null ? `${unrealizedPnlPercent}%` : 'N/A'}), Downside Loss Risk % (${downsideLossPercent}%), Recovery Upside % (+${upsideRecoveryPercent}%), and Capital Deterioration Risk Score (${riskScorePercent}% - ${riskLevel}) in Section 8.`,
+      `3. Identify any MISSING INFORMATION explicitly.`,
+      `4. DO NOT automatically advise the user to sell; present a balanced risk assessment.`,
+      `5. Investigate the 4 core deterioration categories:`,
       `   A. Personal Investment Mistakes (if user data provided)`,
       `   B. Company Decision Problems (capital allocation, acquisitions, borrowing, expansion inefficiencies)`,
       `   C. Product and Business Problems (demand changes, product quality, competition, launch failures)`,
-      `   D. External Market Factors (macroeconomic, interest rates, regulations, supply chain, geopolitics)`,
+      `   D. External Market & War Factors (geopolitics, macro inflation, supply chain routes, interest rates)`,
       '',
       `VERIFIED FINANCIAL METRICS:`,
       metricsSummary,
+      '',
+      `QUANTITATIVE RISK, PROFIT & LOSS METRICS:`,
+      `- Current Stock Price: ₹${currentPriceNum}`,
+      `- Position Return / P&L: ${unrealizedPnlPercent !== null ? `${unrealizedPnlPercent >= 0 ? '+' : ''}${unrealizedPnlPercent}%` : 'No purchase price provided'}`,
+      `- Potential Downside Loss Exposure: ${downsideLossPercent}% (Capital Protection Exit Trigger: ₹${exitTriggerPrice})`,
+      `- Upside Recovery Target: +${upsideRecoveryPercent}% (Recovery Target: ₹${targetRecoveryPrice})`,
+      `- Capital Deterioration Risk Score: ${riskScorePercent}% (${riskLevel})`,
+      `- Recommended Action: ${recommendationAction} (${recommendationSummary})`,
+      '',
+      `GEOPOLITICAL & WAR CONFLICT RISK METRICS:`,
+      `- Active War / Conflict: ${warConflictImpact.conflictType} (${warConflictImpact.conflictStatus})`,
+      `- Conflict Sensitivity: ${warConflictImpact.impactSeverity} (War Risk Score: ${warConflictImpact.warRiskScorePercent}%)`,
+      `- Direct Vulnerability Channels: ${warConflictImpact.exposureChannels.join(', ')}`,
+      `- Geopolitical Sell Trigger: ${warConflictImpact.directEffect}`,
+      `- Defensive Hedging / Exit Strategy: ${warConflictImpact.strategicImplication}`,
       '',
       `INVESTOR-SPECIFIC POSITION DATA:`,
       personalSectionText,
@@ -138,7 +276,7 @@ export class SellAnalysisService {
       `## 5. Product and Business Analysis`,
       `## 6. External Market Factors`,
       `## 7. Investor-Specific Profit/Loss`,
-      `## 8. Risk Assessment`,
+      `## 8. Risk, Profit Protection & Loss Threshold Analysis`,
       `## 9. Important Metrics to Monitor`,
       `## 10. Evidence and Sources`,
     ].join('\n');
@@ -171,11 +309,11 @@ export class SellAnalysisService {
       reportMarkdown = rawText;
     } catch (err: any) {
       console.warn(`[SellAnalysisService] Ollama inference fallback for ${cleanSym}:`, err.message);
-      reportMarkdown = this.generateFallbackReport(profile, financials, personalSectionText);
+      reportMarkdown = this.generateFallbackReport(profile, financials, personalSectionText, riskRewardMetrics);
     }
 
     if (!reportMarkdown || reportMarkdown.length < 50) {
-      reportMarkdown = this.generateFallbackReport(profile, financials, personalSectionText);
+      reportMarkdown = this.generateFallbackReport(profile, financials, personalSectionText, riskRewardMetrics);
     }
 
     const sections = this.parseSections(reportMarkdown);
@@ -210,6 +348,7 @@ export class SellAnalysisService {
       reportMarkdown,
       sections,
       personalInvestmentData: personalPnlAnalysis || undefined,
+      riskRewardMetrics,
       sourceReferences: finalSources,
       metricsSnapshot: {
         profile,
@@ -228,6 +367,7 @@ export class SellAnalysisService {
       reportMarkdown,
       sections,
       personalInvestmentAnalysis: personalPnlAnalysis,
+      riskRewardMetrics,
       riskSnapshot: {
         debtToEquity: financials.debtToEquity.value,
         debtAssessment: financials.riskAnalysisInputs.debtLevels,
@@ -264,12 +404,33 @@ export class SellAnalysisService {
     return sections;
   }
 
-  private static generateFallbackReport(profile: any, financials: any, personalText: string): string {
+  private static generateFallbackReport(
+    profile: any,
+    financials: any,
+    personalText: string,
+    riskMetrics?: SellRiskRewardMetrics
+  ): string {
+    const rm: SellRiskRewardMetrics = riskMetrics || {
+      currentPrice: profile.latestSharePrice ?? 100,
+      unrealizedPnlPercent: null,
+      profitLockInPercent: 0,
+      downsideLossPercent: -15.0,
+      upsideRecoveryPercent: 8.0,
+      riskScorePercent: 65,
+      riskLevel: 'Moderate Risk (Monitor)' as const,
+      exitTriggerPrice: (profile.latestSharePrice ?? 100) * 0.85,
+      targetRecoveryPrice: (profile.latestSharePrice ?? 100) * 1.08,
+      riskRewardRatio: 1.88,
+      recommendationAction: 'TRIM' as const,
+      recommendationSummary: 'Manage downside exposure with trailing capital protection stop.',
+      rationale: 'Manage downside exposure with trailing capital protection stop.',
+    };
+
     return [
       `# Institutional Sell & Risk Analysis: ${profile.companyName} (${profile.symbol})`,
       '',
       `## 1. Performance Summary`,
-      `**Verified Fact:** ${profile.companyName} trades at ${financials.freeCashFlow.currency || 'USD'} ${profile.latestSharePrice}, showing daily variance of ${profile.dailyPercentageChange}%.`,
+      `**Verified Fact:** ${profile.companyName} trades at ${financials.freeCashFlow.currency || 'INR'} ${profile.latestSharePrice}, showing daily variance of ${profile.dailyPercentageChange}%.`,
       '',
       `## 2. Financial Deterioration`,
       `**Verified Fact:** Debt-to-Equity is recorded at ${financials.debtToEquity.value ?? 'N/A'}x (${financials.riskAnalysisInputs.debtLevels}).`,
@@ -290,15 +451,28 @@ export class SellAnalysisService {
       `## 7. Investor-Specific Profit/Loss`,
       personalText,
       '',
-      `## 8. Risk Assessment`,
-      `- Leverage Risk: ${financials.riskAnalysisInputs.debtLevels}`,
-      `- Cash Flow Risk: ${financials.riskAnalysisInputs.cashFlowTrends}`,
-      `- Valuation Risk: P/E is ${financials.valuation.peRatio?.value ?? 'N/A'}. High multiples leave less margin of safety against missed earnings.`,
+      `## 8. Risk, Profit Protection & Loss Threshold Analysis`,
+      `- **Current Position Return / P&L**: ${rm.unrealizedPnlPercent !== null ? `${rm.unrealizedPnlPercent >= 0 ? '+' : ''}${rm.unrealizedPnlPercent}%` : 'Position cost basis not provided'}`,
+      `- **Downside Loss Risk (Further Decline)**: ${rm.downsideLossPercent}% (Capital Protection Stop: ₹${rm.exitTriggerPrice.toLocaleString('en-IN')})`,
+      `- **Upside Recovery Potential**: +${rm.upsideRecoveryPercent}% (Mean-Reversion Target: ₹${rm.targetRecoveryPrice.toLocaleString('en-IN')})`,
+      `- **Capital Deterioration Risk Score**: ${rm.riskScorePercent}% (${rm.riskLevel})`,
+      `- **Actionable Exit Strategy**: **${rm.recommendationAction}** — ${rm.recommendationSummary}`,
+      `- **Leverage & Solvency Risk**: Debt Level is ${financials.riskAnalysisInputs.debtLevels} (D/E: ${financials.debtToEquity.value ?? 'N/A'}).`,
+      `- **Cash Flow Protection**: Cash trend evaluated as ${financials.riskAnalysisInputs.cashFlowTrends} (FCF: ${financials.freeCashFlow.value !== null ? financials.freeCashFlow.value : 'N/A'}).`,
+      rm.warConflictImpact
+        ? [
+            `- **Geopolitical & War Vulnerability**: **${rm.warConflictImpact.impactSeverity}** (${rm.warConflictImpact.conflictType})`,
+            `- **War Transmission Channels**: ${rm.warConflictImpact.exposureChannels.map((c: string) => `\`${c}\``).join(' • ')}`,
+            `- **Geopolitical Exit Risk**: ${rm.warConflictImpact.directEffect}`,
+            `- **Strategic Risk Guidance**: ${rm.warConflictImpact.strategicImplication}`,
+          ].join('\n')
+        : '',
       '',
       `## 9. Important Metrics to Monitor`,
       `1. Free Cash Flow stability (${financials.freeCashFlow.value !== null ? financials.freeCashFlow.value : 'N/A'}).`,
       `2. Quarterly operating margin retention (${financials.profitability.operatingProfitMargin?.value ?? 'N/A'}%).`,
       `3. Debt servicing covenants and leverage ratio.`,
+      `4. Geopolitical crude benchmark volatility and international shipping freight costs.`,
       '',
       `## 10. Evidence and Sources`,
       `Source: ${financials.source}. Analysis grounded in verified financial filings. Note: Independent financial consultation is advised before executing sell orders.`,

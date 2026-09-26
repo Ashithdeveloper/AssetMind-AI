@@ -17,7 +17,8 @@
     "demo": "tsx src/tests/demo-workflow.ts",
     "seed:companies": "tsx src/scripts/seed-80-companies.ts",
     "crawl:market": "tsx src/scripts/crawl-live-market.ts",
-    "db:stats": "tsx src/scripts/check-database-stats.ts"
+    "db:stats": "tsx src/scripts/check-database-stats.ts",
+    "db:purge-global": "tsx src/scripts/remove-global-companies.ts"
   },
   "keywords": [],
   "author": "",

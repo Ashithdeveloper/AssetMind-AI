@@ -4,15 +4,21 @@ exports.companyRoutes = void 0;
 const express_1 = require("express");
 const company_controller_1 = require("./company.controller");
 const router = (0, express_1.Router)();
-// GET /api/companies/explore
+// GET /api/companies and GET /api/companies/explore
+router.get('/', company_controller_1.CompanyController.explore);
 router.get('/explore', company_controller_1.CompanyController.explore);
 // GET /api/companies/search
 router.get('/search', company_controller_1.CompanyController.search);
 // GET /api/companies/:symbol
 router.get('/:symbol', company_controller_1.CompanyController.getProfile);
-// GET /api/companies/:symbol/price-history
+// GET /api/companies/:symbol/prices and GET /api/companies/:symbol/price-history
+router.get('/:symbol/prices', company_controller_1.CompanyController.getPriceHistory);
 router.get('/:symbol/price-history', company_controller_1.CompanyController.getPriceHistory);
 // GET /api/companies/:symbol/financials
 router.get('/:symbol/financials', company_controller_1.CompanyController.getFinancials);
+// GET /api/companies/:symbol/statements
+router.get('/:symbol/statements', company_controller_1.CompanyController.getStatements);
+// POST /api/companies/:symbol/refresh
+router.post('/:symbol/refresh', company_controller_1.CompanyController.refreshCompany);
 exports.companyRoutes = router;
 //# sourceMappingURL=company.routes.js.map

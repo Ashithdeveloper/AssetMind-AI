@@ -5,6 +5,7 @@ import { Asset } from '../../models/Asset.model';
 import { FinancialData } from '../../models/FinancialData.model';
 import { StockPrice } from '../../models/StockPrice.model';
 import { ScrapingJob } from '../../models/ScrapingJob.model';
+import { ScreenerExtractionService } from './services/screenerExtraction.service';
 
 export interface ScrapeCycleOptions {
   onlyUnsaved?: boolean;
@@ -105,10 +106,10 @@ export class ScrapingScheduler {
         }
       >();
 
-      // a) Discover live companies directly from source websites
+      // a) Discover live companies directly from Screener.in
       try {
         const discovered = await MarketDiscoveryService.discoverLiveCompanies({
-          region: 'all',
+          region: 'india',
           limit: options.maxCompanies || 80,
         });
         for (const comp of discovered) {
@@ -116,24 +117,24 @@ export class ScrapingScheduler {
           candidateMap.set(sym, {
             symbol: sym,
             name: comp.name || sym,
-            country: comp.country || 'United States',
-            exchange: comp.exchange || 'NASDAQ',
+            country: 'India',
+            exchange: comp.exchange || 'NSE',
           });
         }
       } catch (discErr: any) {
         console.warn('[Scheduler] Live discovery warning:', discErr.message || discErr);
       }
 
-      // c) Load existing DB assets
-      const dbAssets = await Asset.find({}).lean();
+      // c) Load existing DB Indian assets
+      const dbAssets = await Asset.find({ country: 'India' }).lean();
       for (const asset of dbAssets) {
         const sym = asset.symbol.toUpperCase();
         if (!candidateMap.has(sym)) {
           candidateMap.set(sym, {
             symbol: sym,
             name: asset.companyName || sym,
-            country: asset.country || 'United States',
-            exchange: asset.exchange || 'NASDAQ',
+            country: 'India',
+            exchange: asset.exchange || 'NSE',
             sector: asset.sector,
             industry: asset.industry,
           });
@@ -260,23 +261,10 @@ export class ScrapingScheduler {
         const isUnsaved = !savedSet.has(item.symbol);
         const tag = isUnsaved ? '⚡ UNSAVED' : '⏱️ STALE';
 
-        const sources = item.sources && item.sources.length > 0
-          ? item.sources
-          : (isIndia
-              ? ['screener-in', 'yahoo-finance']
-              : ['yahoo-finance', 'stockanalysis', 'sec-edgar']);
-
         try {
-          console.log(`[Scheduler] [${i + 1}/${queue.length}] [${tag}] [${item.country.toUpperCase()}] Scraping ${item.symbol}...`);
-          const job = await ScrapingService.triggerScrape({
-            symbol: item.symbol,
-            sources,
-            scraperProvider: env.SCRAPER_PROVIDER,
-          });
-
-          console.log(
-            `[Scheduler] ✔️ [${item.symbol}] Scraped: ${job.recordsValidated} validated (Status: ${job.status})`
-          );
+          console.log(`[Scheduler] [${i + 1}/${queue.length}] [${tag}] [INDIA] Scraping ${item.symbol} via Screener.in...`);
+          await ScreenerExtractionService.scrapeCompany(item.symbol);
+          console.log(`[Scheduler] ✔️ [${item.symbol}] Full fundamentals & financial statements scraped from Screener.in`);
           completed++;
         } catch (err: any) {
           console.error(`[Scheduler] ⚠️ Error scraping ${item.symbol}:`, err.message || err);

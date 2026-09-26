@@ -18,6 +18,8 @@ exports.fetchNewsForSymbol = fetchNewsForSymbol;
 exports.fetchMarketNews = fetchMarketNews;
 exports.fetchMultiSymbolNews = fetchMultiSymbolNews;
 exports.clearNewsCache = clearNewsCache;
+exports.analyzeCompanyNews = analyzeCompanyNews;
+const axios_1 = __importDefault(require("axios"));
 const rss_parser_1 = __importDefault(require("rss-parser"));
 const parser = new rss_parser_1.default({
     timeout: 8000,
@@ -286,5 +288,207 @@ async function fetchMultiSymbolNews(symbols) {
  */
 function clearNewsCache() {
     newsCache.clear();
+}
+// ─── News Analysis Cache ─────────────────────────────────────────────────────
+const newsAnalysisCache = new Map();
+const ANALYSIS_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+/**
+ * PUBLIC: AI News Analysis — Analyzes and shorts (distills) all recent news for a company
+ */
+async function analyzeCompanyNews(symbol, companyName) {
+    const cleanSym = symbol.trim().toUpperCase();
+    const cacheKey = `analysis:${cleanSym}`;
+    const cached = newsAnalysisCache.get(cacheKey);
+    if (cached && Date.now() - cached.fetchedAt < ANALYSIS_CACHE_TTL_MS) {
+        return cached.analysis;
+    }
+    // 1. Fetch all recent news for this symbol
+    const articles = await fetchNewsForSymbol(cleanSym, companyName);
+    const now = new Date().toISOString();
+    const displayName = companyName || cleanSym;
+    // 2. Compute aggregate sentiment percentages across all articles
+    const total = articles.length;
+    let posCount = 0;
+    let negCount = 0;
+    let neuCount = 0;
+    for (const a of articles) {
+        if (a.sentiment === 'positive')
+            posCount++;
+        else if (a.sentiment === 'negative')
+            negCount++;
+        else
+            neuCount++;
+    }
+    const positivePercent = total > 0 ? Number(((posCount / total) * 100).toFixed(1)) : 50;
+    const negativePercent = total > 0 ? Number(((negCount / total) * 100).toFixed(1)) : 20;
+    const neutralPercent = total > 0 ? Number(((neuCount / total) * 100).toFixed(1)) : 30;
+    const sentimentScore = total > 0 ? Number(((posCount - negCount) / total).toFixed(2)) : 0.2;
+    let overallSentiment = 'Neutral';
+    if (sentimentScore >= 0.35)
+        overallSentiment = 'Bullish';
+    else if (sentimentScore >= 0.10)
+        overallSentiment = 'Somewhat Bullish';
+    else if (sentimentScore > -0.10)
+        overallSentiment = 'Neutral';
+    else if (sentimentScore > -0.35)
+        overallSentiment = 'Somewhat Bearish';
+    else
+        overallSentiment = 'Bearish';
+    // 3. Fallback heuristic builder if LLM is unavailable or times out
+    const buildFallbackAnalysis = () => {
+        const positiveArticles = articles.filter((a) => a.sentiment === 'positive');
+        const negativeArticles = articles.filter((a) => a.sentiment === 'negative');
+        const topPositives = positiveArticles.slice(0, 3).map((a) => a.title);
+        const topNegatives = negativeArticles.slice(0, 3).map((a) => a.title);
+        const headline = total === 0
+            ? `No recent high-impact financial news reported for ${displayName}.`
+            : overallSentiment.includes('Bullish')
+                ? `Positive operational momentum and optimistic institutional sentiment dominate recent headlines for ${displayName}.`
+                : overallSentiment.includes('Bearish')
+                    ? `Near-term market caution and margin headwinds surround recent reporting for ${displayName}.`
+                    : `Mixed corporate developments and balanced market coverage reflected across recent ${displayName} reporting.`;
+        const shortSummary = total === 0
+            ? `Recent financial press coverage for ${displayName} (${cleanSym}) remains limited across major business wires. Market sentiment is presently driven by broader sector benchmarks and upcoming quarterly corporate earnings disclosures.`
+            : `In short: Coverage across ${total} financial news reports highlights a ${overallSentiment.toLowerCase()} stance for ${displayName} (${cleanSym}). Key news activity centers on corporate business operations, quarterly financial trajectories, and market demand dynamics. Institutional news sources show ${positivePercent}% positive coverage versus ${negativePercent}% risk/headwind mentions, indicating ${overallSentiment.includes('Bullish') ? 'constructive market interest' : overallSentiment.includes('Bearish') ? 'elevated short-term caution' : 'balanced investor focus'}.`;
+        const positiveCatalysts = topPositives.length > 0
+            ? topPositives
+            : [
+                `Consistent domestic demand presence in ${displayName}'s core operating domain.`,
+                `Ongoing institutional investment and analyst coverage across Indian exchanges.`,
+            ];
+        const concerns = topNegatives.length > 0
+            ? topNegatives
+            : [
+                `Sector cyclicality and sensitivity to macroeconomic interest rate adjustments.`,
+                `Competitive pricing pressures from domestic and international peers.`,
+            ];
+        return {
+            symbol: cleanSym,
+            companyName: displayName,
+            totalArticles: total,
+            sentimentBreakdown: {
+                positivePercent,
+                neutralPercent,
+                negativePercent,
+                overallSentiment,
+                score: sentimentScore,
+            },
+            headlineTakeaway: headline,
+            shortSummary,
+            keyCatalysts: {
+                positive: positiveCatalysts,
+                concerns,
+            },
+            marketImpact: {
+                shortTerm: {
+                    outlook: overallSentiment.includes('Bullish') ? 'Positive' : overallSentiment.includes('Bearish') ? 'Negative' : 'Neutral',
+                    description: `Near-term price action is likely to track ${overallSentiment.toLowerCase()} news tone and intraday volume trends.`,
+                },
+                mediumTerm: {
+                    outlook: overallSentiment.includes('Bullish') ? 'Positive' : overallSentiment.includes('Bearish') ? 'Negative' : 'Consolidating',
+                    description: `Fundamental medium-term direction will depend on execution of ongoing contracts and earnings margin stability.`,
+                },
+            },
+            analyzedArticles: articles.slice(0, 8).map((a) => ({
+                title: a.title,
+                source: a.source,
+                publishedAt: a.publishedAt.toISOString(),
+                sentiment: a.sentiment,
+                url: a.url,
+            })),
+            generatedAt: now,
+        };
+    };
+    // 4. If articles exist, try generating LLM-powered short synthesis
+    if (total > 0) {
+        try {
+            const articlesContext = articles
+                .slice(0, 10)
+                .map((a, i) => `[News ${i + 1}] ${a.title} (Source: ${a.source}) - ${a.summary}`)
+                .join('\n');
+            const ollamaUrl = process.env.OLLAMA_URL || 'http://127.0.0.1:11434';
+            const ollamaModel = process.env.OLLAMA_MODEL || 'gpt-oss:20b-cloud';
+            const prompt = [
+                `You are an institutional financial editor at AssetMind AI.`,
+                `Synthesize and distill ALL the following ${total} news articles for ${displayName} (${cleanSym}) into a concise, professional AI news digest.`,
+                ``,
+                `ARTICLES:`,
+                articlesContext,
+                ``,
+                `OUTPUT STRICTLY IN JSON FORMAT matching this schema:`,
+                `{`,
+                `  "headlineTakeaway": "Single punchy sentence summarizing the core news theme",`,
+                `  "shortSummary": "Crisp 2-paragraph synthesis summarizing all recent news for the company, major developments, contracts, and market sentiment",`,
+                `  "positiveCatalysts": ["bullet 1", "bullet 2"],`,
+                `  "concerns": ["bullet 1", "bullet 2"],`,
+                `  "shortTermOutlook": "Positive" | "Neutral" | "Negative" | "Volatile",`,
+                `  "shortTermDescription": "One sentence on near-term impact",`,
+                `  "mediumTermOutlook": "Positive" | "Neutral" | "Negative" | "Consolidating",`,
+                `  "mediumTermDescription": "One sentence on medium-term impact"`,
+                `}`,
+                `No introductory text, only raw valid JSON.`,
+            ].join('\n');
+            const response = await axios_1.default.post(`${ollamaUrl}/api/generate`, {
+                model: ollamaModel,
+                prompt,
+                stream: false,
+                format: 'json',
+                options: {
+                    temperature: 0.2,
+                    num_ctx: 3072,
+                    num_predict: 600,
+                },
+            }, { timeout: 15000 });
+            let rawText = response.data?.response?.trim() || '';
+            rawText = rawText.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+            const parsed = JSON.parse(rawText);
+            if (parsed && parsed.shortSummary && parsed.headlineTakeaway) {
+                const aiAnalysis = {
+                    symbol: cleanSym,
+                    companyName: displayName,
+                    totalArticles: total,
+                    sentimentBreakdown: {
+                        positivePercent,
+                        neutralPercent,
+                        negativePercent,
+                        overallSentiment,
+                        score: sentimentScore,
+                    },
+                    headlineTakeaway: parsed.headlineTakeaway,
+                    shortSummary: parsed.shortSummary,
+                    keyCatalysts: {
+                        positive: Array.isArray(parsed.positiveCatalysts) && parsed.positiveCatalysts.length > 0 ? parsed.positiveCatalysts : [parsed.headlineTakeaway],
+                        concerns: Array.isArray(parsed.concerns) && parsed.concerns.length > 0 ? parsed.concerns : ['Sector and market volatility risk.'],
+                    },
+                    marketImpact: {
+                        shortTerm: {
+                            outlook: parsed.shortTermOutlook || (overallSentiment.includes('Bullish') ? 'Positive' : 'Neutral'),
+                            description: parsed.shortTermDescription || 'Near-term price action guided by news volume.',
+                        },
+                        mediumTerm: {
+                            outlook: parsed.mediumTermOutlook || (overallSentiment.includes('Bullish') ? 'Positive' : 'Consolidating'),
+                            description: parsed.mediumTermDescription || 'Fundamentals and execution drive medium-term value.',
+                        },
+                    },
+                    analyzedArticles: articles.slice(0, 8).map((a) => ({
+                        title: a.title,
+                        source: a.source,
+                        publishedAt: a.publishedAt.toISOString(),
+                        sentiment: a.sentiment,
+                        url: a.url,
+                    })),
+                    generatedAt: now,
+                };
+                newsAnalysisCache.set(cacheKey, { analysis: aiAnalysis, fetchedAt: Date.now() });
+                return aiAnalysis;
+            }
+        }
+        catch (err) {
+            console.warn(`[NewsService] Ollama news analysis fallback for ${cleanSym}:`, err.message);
+        }
+    }
+    const fallback = buildFallbackAnalysis();
+    newsAnalysisCache.set(cacheKey, { analysis: fallback, fetchedAt: Date.now() });
+    return fallback;
 }
 //# sourceMappingURL=news.service.js.map

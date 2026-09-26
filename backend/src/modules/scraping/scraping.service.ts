@@ -112,13 +112,11 @@ export class ScrapingService {
         'LT',
       ].includes(symbol.replace(/\.NS$|\.BO$/i, ''));
 
-    // Target sources: defaults to screener-in for Indian equities, yahoo-finance & stockanalysis for global
+    // Target sources: defaults strictly to Screener.in and Yahoo Finance India for Indian equities
     let targetSources =
       params.sources && params.sources.length > 0
         ? params.sources
-        : isIndian
-        ? ['screener-in', 'yahoo-finance']
-        : ['yahoo-finance', 'stockanalysis'];
+        : ['screener-in', 'yahoo-finance'];
 
     // Normalize source ids
     targetSources = targetSources.map((s) => s.trim().toLowerCase().replace(/[_\s]/g, '-'));

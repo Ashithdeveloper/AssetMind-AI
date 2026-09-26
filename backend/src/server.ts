@@ -1,8 +1,14 @@
+import dns from 'node:dns';
 import { createApp } from './app';
 import { env } from './config/env';
 import { connectDatabase, disconnectDatabase } from './config/database';
 import { ScrapingScheduler } from './modules/scraping/scraping.scheduler';
 import { startLivePriceRefresh, stopLivePriceRefresh } from './modules/realtime/liveRefresh.scheduler';
+
+// Prioritize IPv4 on Windows to prevent intermittent getaddrinfo ENOTFOUND DNS resolution issues
+if (typeof (dns as any).setDefaultResultOrder === 'function') {
+  (dns as any).setDefaultResultOrder('ipv4first');
+}
 
 const startServer = async () => {
   try {

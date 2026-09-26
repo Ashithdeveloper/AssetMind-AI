@@ -71,7 +71,7 @@ class StockAnalysisAdapter extends base_adapter_1.BaseAdapter {
             baseUrl: this.baseUrl,
             supportedMetrics: this.supportedMetrics,
             supportedScrapers: ['playwright', 'scrapingbee'],
-            description: 'In-depth stock overview, financial statements, balance items, cash flow, and margin ratios.',
+            description: '[US Equities Only - Inactive for Indian Stock Market] In-depth stock overview and financial statements.',
         };
     }
     buildUrl(symbol) {
@@ -190,7 +190,7 @@ class StockAnalysisAdapter extends base_adapter_1.BaseAdapter {
                 if (label === key || label.toLowerCase() === key.toLowerCase()) {
                     // Extract only the primary numeric value, stripping appended % changes
                     const cleanValue = this.extractPrimaryValue(rawValue);
-                    const m = this.createMetric(metricKey, cleanValue, 'USD', 'TTM');
+                    const m = this.createMetric(metricKey, cleanValue, 'INR', 'TTM');
                     if (m && !metrics.find((x) => x.metricName === metricKey)) {
                         metrics.push(m);
                     }
@@ -215,8 +215,8 @@ class StockAnalysisAdapter extends base_adapter_1.BaseAdapter {
             companyInfo: {
                 symbol: cleanSym,
                 companyName: companyName || cleanSym,
-                exchange: exchange || 'NASDAQ',
-                country: 'United States',
+                exchange: exchange && exchange !== 'NASDAQ' && exchange !== 'NYSE' ? exchange : 'NSE',
+                country: 'India',
                 sector,
                 industry,
                 description,
@@ -224,7 +224,7 @@ class StockAnalysisAdapter extends base_adapter_1.BaseAdapter {
             stockPrice: currentPrice
                 ? {
                     price: currentPrice,
-                    currency: 'USD',
+                    currency: 'INR',
                     change: priceChange,
                     changePercent: percentChange,
                     priceTimestamp: new Date(),

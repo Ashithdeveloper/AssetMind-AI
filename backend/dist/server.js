@@ -1,10 +1,18 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
+const node_dns_1 = __importDefault(require("node:dns"));
 const app_1 = require("./app");
 const env_1 = require("./config/env");
 const database_1 = require("./config/database");
 const scraping_scheduler_1 = require("./modules/scraping/scraping.scheduler");
 const liveRefresh_scheduler_1 = require("./modules/realtime/liveRefresh.scheduler");
+// Prioritize IPv4 on Windows to prevent intermittent getaddrinfo ENOTFOUND DNS resolution issues
+if (typeof node_dns_1.default.setDefaultResultOrder === 'function') {
+    node_dns_1.default.setDefaultResultOrder('ipv4first');
+}
 const startServer = async () => {
     try {
         // 1. Connect to MongoDB

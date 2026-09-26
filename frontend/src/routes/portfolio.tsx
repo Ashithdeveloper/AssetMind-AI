@@ -6,7 +6,19 @@ import { findCompany, fmtChange, fmtINR } from "@/lib/market-data";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/portfolio")({
-  head: () => ({ meta: [{ title: "Portfolio — AssetMind AI" }, { name: "description", content: "A sample portfolio overview with holdings, allocation and performance." }, { property: "og:title", content: "Portfolio — AssetMind AI" }, { property: "og:description", content: "Holdings and sector allocation at a glance." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
+  head: () => ({
+    meta: [
+      { title: "Portfolio — AssetMind AI" },
+      {
+        name: "description",
+        content: "A sample portfolio overview with holdings, allocation and performance.",
+      },
+      { property: "og:title", content: "Portfolio — AssetMind AI" },
+      { property: "og:description", content: "Holdings and sector allocation at a glance." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: PortfolioPage,
 });
 

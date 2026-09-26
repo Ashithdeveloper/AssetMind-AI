@@ -17,6 +17,7 @@ router.post('/refresh', RealTimeController.triggerRefresh);
 // Per-symbol endpoints
 router.get('/:symbol/quote', RealTimeController.getLiveQuote);
 router.get('/:symbol/news', RealTimeController.getSymbolNews);
+router.get('/:symbol/news-analysis', RealTimeController.getCompanyNewsAnalysis);
 router.get('/:symbol/full', RealTimeController.getFullRealtime);
 router.get('/:symbol/stream', RealTimeController.streamQuote);
 

@@ -82,6 +82,9 @@ const AnalysisReportSchema = new mongoose_1.Schema({
     metricsSnapshot: {
         type: mongoose_1.Schema.Types.Mixed,
     },
+    riskRewardMetrics: {
+        type: mongoose_1.Schema.Types.Mixed,
+    },
     dataTimestamp: {
         type: Date,
         default: Date.now,

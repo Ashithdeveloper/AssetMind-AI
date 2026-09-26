@@ -7,51 +7,6 @@ const companies_catalog_1 = require("../config/companies.catalog");
 const company_service_1 = require("../modules/companies/company.service");
 const liveQuote_service_1 = require("../modules/realtime/liveQuote.service");
 const ragSync_service_1 = require("../modules/rag/services/ragSync.service");
-// Correct metadata fixes for international companies previously mislabeled
-const ASSET_OVERRIDES = {
-    '005930.KS': { companyName: 'Samsung Electronics', country: 'South Korea', sector: 'Technology', industry: 'Consumer Electronics & Semiconductors', exchange: 'KRX' },
-    '000660.KS': { companyName: 'SK Hynix', country: 'South Korea', sector: 'Technology', industry: 'Memory Semiconductors', exchange: 'KRX' },
-    '2222.SR': { companyName: 'Saudi Aramco', country: 'Saudi Arabia', sector: 'Energy', industry: 'Oil & Gas Production', exchange: 'Tadawul' },
-    'TSM': { companyName: 'Taiwan Semiconductor Manufacturing Co (TSMC)', country: 'Taiwan', sector: 'Technology', industry: 'Semiconductor Foundry', exchange: 'NYSE' },
-    'ASML': { companyName: 'ASML Holding N.V.', country: 'Netherlands', sector: 'Technology', industry: 'Semiconductor Lithography', exchange: 'NASDAQ' },
-    '688825.SS': { companyName: 'CXMT (ChangXin Memory Technologies)', country: 'China', sector: 'Technology', industry: 'DRAM Semiconductors', exchange: 'SSE' },
-    '601939.SS': { companyName: 'China Construction Bank', country: 'China', sector: 'Financial Services', industry: 'Commercial Banking', exchange: 'SSE' },
-    'TCEHY': { companyName: 'Tencent Holdings', country: 'China', sector: 'Communication Services', industry: 'Internet & Gaming', exchange: 'OTC' },
-    'SAP': { companyName: 'SAP SE', country: 'Germany', sector: 'Technology', industry: 'Enterprise Software', exchange: 'NYSE' },
-    'SONY': { companyName: 'Sony Group Corporation', country: 'Japan', sector: 'Technology', industry: 'Consumer Electronics & Entertainment', exchange: 'NYSE' },
-    'NVO': { companyName: 'Novo Nordisk A/S', country: 'Denmark', sector: 'Healthcare', industry: 'Pharmaceuticals', exchange: 'NYSE' },
-    'BABA': { companyName: 'Alibaba Group Holding Ltd', country: 'China', sector: 'Consumer Cyclical', industry: 'E-Commerce & Cloud', exchange: 'NYSE' },
-    'NVDA': { sector: 'Technology', industry: 'Semiconductors & AI Hardware' },
-    'AAPL': { sector: 'Technology', industry: 'Consumer Electronics' },
-    'MSFT': { sector: 'Technology', industry: 'Software & Cloud Infrastructure' },
-    'GOOGL': { sector: 'Communication Services', industry: 'Internet & AI Services' },
-    'GOOG': { sector: 'Communication Services', industry: 'Internet & AI Services' },
-    'AMZN': { sector: 'Consumer Cyclical', industry: 'E-Commerce & Cloud Computing' },
-    'META': { sector: 'Communication Services', industry: 'Social Media & AI' },
-    'TSLA': { sector: 'Consumer Cyclical', industry: 'Electric Vehicles & Clean Energy' },
-    'BRK-B': { sector: 'Financial Services', industry: 'Multi-Sector Conglomerate' },
-    'LLY': { sector: 'Healthcare', industry: 'Pharmaceuticals' },
-    'JPM': { sector: 'Financial Services', industry: 'Diversified Banking' },
-    'WMT': { sector: 'Consumer Defensive', industry: 'Discount Retail Stores' },
-    'V': { sector: 'Financial Services', industry: 'Payment Processing' },
-    'INTC': { sector: 'Technology', industry: 'Semiconductors' },
-    'XOM': { sector: 'Energy', industry: 'Integrated Oil & Gas' },
-    'JNJ': { sector: 'Healthcare', industry: 'Medical Devices & Pharma' },
-    'MA': { sector: 'Financial Services', industry: 'Payment Processing' },
-    'ABBV': { sector: 'Healthcare', industry: 'Biopharmaceuticals' },
-    'PLTR': { sector: 'Technology', industry: 'Enterprise AI & Defense Analytics' },
-    'ORCL': { sector: 'Technology', industry: 'Enterprise Software & Database' },
-    'CSCO': { sector: 'Technology', industry: 'Networking Hardware' },
-    'CVX': { sector: 'Energy', industry: 'Oil & Gas' },
-    'COST': { sector: 'Consumer Defensive', industry: 'Wholesale Clubs' },
-    'BAC': { sector: 'Financial Services', industry: 'Diversified Banking' },
-    'LRCX': { sector: 'Technology', industry: 'Semiconductor Equipment' },
-    'KO': { sector: 'Consumer Defensive', industry: 'Beverages' },
-    'AMAT': { sector: 'Technology', industry: 'Semiconductor Equipment' },
-    'CAT': { sector: 'Industrials', industry: 'Heavy Machinery' },
-    'MRK': { sector: 'Healthcare', industry: 'Pharmaceuticals' },
-    'SPCX': { sector: 'Industrials', industry: 'Aerospace & Space Exploration' },
-};
 // Verified baseline financial metrics for prominent Indian equities
 const INDIAN_FINANCIALS_SEED = {
     RELIANCE: {
@@ -302,25 +257,6 @@ async function seed80Companies() {
             existing.website = existing.website || website;
             await existing.save();
             updatedAssets++;
-        }
-    }
-    // Also fix overrides on existing assets in database
-    for (const [sym, patch] of Object.entries(ASSET_OVERRIDES)) {
-        const asset = await Asset_model_1.Asset.findOne({ symbol: sym });
-        if (asset) {
-            if (patch.companyName)
-                asset.companyName = patch.companyName;
-            if (patch.country)
-                asset.country = patch.country;
-            if (patch.sector)
-                asset.sector = patch.sector;
-            if (patch.industry)
-                asset.industry = patch.industry;
-            if (patch.exchange)
-                asset.exchange = patch.exchange;
-            if (!asset.logoUrl)
-                asset.logoUrl = company_service_1.CompanyService.getLogoUrl(sym);
-            await asset.save();
         }
     }
     console.log(`✔️ Assets Sync Complete: ${createdAssets} created, ${updatedAssets} updated.`);

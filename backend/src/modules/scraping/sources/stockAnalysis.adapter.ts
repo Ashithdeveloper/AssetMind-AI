@@ -39,7 +39,7 @@ export class StockAnalysisAdapter extends BaseAdapter implements SourceAdapter {
       baseUrl: this.baseUrl,
       supportedMetrics: this.supportedMetrics,
       supportedScrapers: ['playwright', 'scrapingbee'],
-      description: 'In-depth stock overview, financial statements, balance items, cash flow, and margin ratios.',
+      description: '[US Equities Only - Inactive for Indian Stock Market] In-depth stock overview and financial statements.',
     };
   }
 
@@ -175,7 +175,7 @@ export class StockAnalysisAdapter extends BaseAdapter implements SourceAdapter {
         if (label === key || label.toLowerCase() === key.toLowerCase()) {
           // Extract only the primary numeric value, stripping appended % changes
           const cleanValue = this.extractPrimaryValue(rawValue);
-          const m = this.createMetric(metricKey, cleanValue, 'USD', 'TTM');
+          const m = this.createMetric(metricKey, cleanValue, 'INR', 'TTM');
           if (m && !metrics.find((x) => x.metricName === metricKey)) {
             metrics.push(m);
           }
@@ -201,8 +201,8 @@ export class StockAnalysisAdapter extends BaseAdapter implements SourceAdapter {
       companyInfo: {
         symbol: cleanSym,
         companyName: companyName || cleanSym,
-        exchange: exchange || 'NASDAQ',
-        country: 'United States',
+        exchange: exchange && exchange !== 'NASDAQ' && exchange !== 'NYSE' ? exchange : 'NSE',
+        country: 'India',
         sector,
         industry,
         description,
@@ -210,7 +210,7 @@ export class StockAnalysisAdapter extends BaseAdapter implements SourceAdapter {
       stockPrice: currentPrice
         ? {
             price: currentPrice,
-            currency: 'USD',
+            currency: 'INR',
             change: priceChange,
             changePercent: percentChange,
             priceTimestamp: new Date(),

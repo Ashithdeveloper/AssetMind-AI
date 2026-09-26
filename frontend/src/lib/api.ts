@@ -38,6 +38,8 @@ export interface ExploreResponse {
 export interface CompanyProfile {
   companyName: string;
   symbol: string;
+  nseSymbol?: string;
+  bseCode?: string;
   exchange: string;
   country: string;
   sector: string;
@@ -45,16 +47,45 @@ export interface CompanyProfile {
   description: string;
   website: string;
   logoUrl: string;
+  dataSource?: string;
   marketCapitalization: number | null;
   latestSharePrice: number;
   dailyPercentageChange: number;
   currency: string;
   latestReportingPeriod: string;
   lastUpdated: string;
+  realTimePrice?: any;
+}
+
+export interface StatementRow {
+  name: string;
+  values: (number | null)[];
+  rawValues?: string[];
+}
+
+export interface StatementTable {
+  headers: string[];
+  rows: StatementRow[];
+}
+
+export interface FinancialStatementsResponse {
+  symbol: string;
+  companyName: string;
+  nseSymbol?: string;
+  bseCode?: string;
+  quarters: StatementTable;
+  profitLoss: StatementTable;
+  balanceSheet: StatementTable;
+  cashFlow: StatementTable;
+  ratios?: StatementTable;
+  source: string;
+  sourceUrl?: string;
+  lastUpdated: string;
 }
 
 export interface PricePoint {
   date: string;
+  timestamp?: number;
   open: number;
   high: number;
   low: number;
@@ -95,10 +126,21 @@ export interface FinancialMetricsResponse {
     operatingProfitMargin?: MetricItem;
     netProfitMargin?: MetricItem;
   };
+  growth?: {
+    revenueGrowth?: MetricItem;
+    profitGrowth?: MetricItem;
+  };
   valuation: {
     peRatio?: MetricItem;
     pbRatio?: MetricItem;
     evToEbitda?: MetricItem;
+    enterpriseValue?: MetricItem;
+  };
+  dataQuality?: {
+    status: 'Verified' | 'Partially Available' | 'Conflicting Data' | 'Refresh Required' | 'Data Unavailable' | string;
+    completenessScore: number;
+    checkedAt?: string;
+    flags?: Array<{ field: string; issue: string; severity: string }>;
   };
   riskAnalysisInputs: {
     debtLevels?: string;
@@ -112,16 +154,64 @@ export interface FinancialMetricsResponse {
   lastUpdated: string;
 }
 
+export interface WarConflictImpact {
+  conflictType: string;
+  conflictStatus: string;
+  impactSeverity: 'Critical Negative' | 'High Negative' | 'Moderate Negative' | 'Neutral / Insulated' | 'Net Beneficiary';
+  exposureChannels: string[];
+  directEffect: string;
+  warRiskScorePercent: number;
+  strategicImplication: string;
+}
+
+export interface BuyRiskRewardMetrics {
+  currentPrice: number;
+  targetPrice: number;
+  stopLossPrice: number;
+  profitPotentialPercent: number;
+  downsideLossPercent: number;
+  riskRewardRatio: number;
+  riskScorePercent: number;
+  riskLevel: 'Low' | 'Moderate' | 'High' | 'Very High';
+  profitProbabilityPercent: number;
+  lossProbabilityPercent: number;
+  supportPrice: number;
+  resistancePrice: number;
+  rationale: string;
+  warConflictImpact?: WarConflictImpact;
+}
+
+export interface SellRiskRewardMetrics {
+  currentPrice: number;
+  purchasePrice?: number;
+  unrealizedPnlPercent: number | null;
+  isProfitable?: boolean;
+  profitLockInPercent: number;
+  downsideLossPercent: number;
+  upsideRecoveryPercent: number;
+  riskScorePercent: number;
+  riskLevel: 'Low Risk (Hold)' | 'Moderate Risk (Monitor)' | 'High Risk (Trim/Hedge)' | 'Severe Risk (Exit)';
+  exitTriggerPrice: number;
+  targetRecoveryPrice: number;
+  riskRewardRatio: number;
+  recommendationAction: 'HOLD' | 'TRIM' | 'EXIT' | 'TAKE_PROFIT';
+  recommendationSummary: string;
+  rationale: string;
+  warConflictImpact?: WarConflictImpact;
+}
+
 export interface AnalysisResponse {
   reportId: string;
   symbol: string;
   companyName: string;
   analysisType: 'BUY' | 'SELL';
   generatedAt: string;
+  verifiedFinancialData?: Record<string, any>;
   reportMarkdown: string;
   sections: Record<string, string>;
   keyMetrics?: Record<string, any>;
   personalInvestmentAnalysis?: any;
+  riskRewardMetrics?: BuyRiskRewardMetrics | SellRiskRewardMetrics | any;
   riskSnapshot?: Record<string, any>;
   sourceReferences: {
     source: string;
@@ -178,11 +268,113 @@ export interface NewsResponse {
   lastFetched: string;
 }
 
+export interface CompanyNewsAnalysis {
+  symbol: string;
+  companyName?: string;
+  totalArticles: number;
+  sentimentBreakdown: {
+    positivePercent: number;
+    neutralPercent: number;
+    negativePercent: number;
+    overallSentiment: 'Bullish' | 'Somewhat Bullish' | 'Neutral' | 'Somewhat Bearish' | 'Bearish';
+    score: number;
+  };
+  headlineTakeaway: string;
+  shortSummary: string;
+  keyCatalysts: {
+    positive: string[];
+    concerns: string[];
+  };
+  marketImpact: {
+    shortTerm: {
+      outlook: 'Positive' | 'Neutral' | 'Negative' | 'Volatile';
+      description: string;
+    };
+    mediumTerm: {
+      outlook: 'Positive' | 'Neutral' | 'Negative' | 'Consolidating';
+      description: string;
+    };
+  };
+  analyzedArticles: {
+    title: string;
+    source: string;
+    publishedAt: string;
+    sentiment: string;
+    url: string;
+  }[];
+  generatedAt: string;
+}
+
 export interface MarketNewsResponse {
   totalArticles: number;
   articles: NewsArticle[];
   lastFetched: string;
   sources: string[];
+}
+
+export interface ChatStockSnapshot {
+  symbol: string;
+  companyName: string;
+  price: number;
+  change: number;
+  changePercent: number;
+  currency: string;
+  pe: number | null;
+  marketCap: number | null;
+  high52: number | null;
+  low52: number | null;
+  volume: number;
+  source: string;
+  lastUpdated: string;
+}
+
+export interface ChatEvidenceItem {
+  chunkId: string;
+  symbol: string;
+  documentType: string;
+  reportingPeriod: string;
+  source: string;
+  sourceUrl?: string;
+  text: string;
+  rerankScore?: number;
+}
+
+export interface ChatNewsItem {
+  title: string;
+  source: string;
+  sentiment?: 'positive' | 'negative' | 'neutral';
+  publishedAt?: string;
+  url?: string;
+}
+
+export interface ChatMessage {
+  _id: string;
+  sessionId: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  referencedSymbols: string[];
+  stockSnapshots: ChatStockSnapshot[];
+  evidence: ChatEvidenceItem[];
+  newsHighlights: ChatNewsItem[];
+  modelUsed?: string;
+  confidenceScore?: number;
+  createdAt: string;
+}
+
+export interface ChatSession {
+  _id: string;
+  title: string;
+  pinned?: boolean;
+  lastMessage?: string;
+  lastMessageAt: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SendChatMessageResponse {
+  session: ChatSession;
+  userMessage: ChatMessage;
+  assistantMessage: ChatMessage;
 }
 
 export interface MarketIndex {
@@ -197,9 +389,16 @@ export interface MarketIndex {
 async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const url = `${API_BASE}${endpoint}`;
   try {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('assetmind_token') : null;
+    const authHeaders: Record<string, string> = {};
+    if (token) {
+      authHeaders['Authorization'] = `Bearer ${token}`;
+    }
+
     const res = await fetch(url, {
       headers: {
         'Content-Type': 'application/json',
+        ...authHeaders,
         ...options?.headers,
       },
       ...options,
@@ -264,6 +463,18 @@ export const apiClient = {
     return request<FinancialMetricsResponse>(`/companies/${encodeURIComponent(symbol)}/financials`);
   },
 
+  // 5b. Financial Statements (Quarterly, Annual P&L, Balance Sheet, Cash Flow from Screener.in)
+  getStatements: async (symbol: string): Promise<FinancialStatementsResponse> => {
+    return request<FinancialStatementsResponse>(`/companies/${encodeURIComponent(symbol)}/statements`);
+  },
+
+  // 5c. Manual Company Refresh from Screener.in
+  refreshCompany: async (symbol: string): Promise<any> => {
+    return request<any>(`/companies/${encodeURIComponent(symbol)}/refresh`, {
+      method: 'POST',
+    });
+  },
+
   // 6. Buy Analysis (AI-powered, grounded in Qdrant evidence)
   generateBuyAnalysis: async (symbol: string): Promise<AnalysisResponse> => {
     return request<AnalysisResponse>(`/analysis/${encodeURIComponent(symbol)}/buy`, {
@@ -308,6 +519,12 @@ export const apiClient = {
     return request<NewsResponse>(`/realtime/${encodeURIComponent(symbol)}/news${qs}`);
   },
 
+  // 10b. AI News Analysis (Synthesizes and distills all company news)
+  getCompanyNewsAnalysis: async (symbol: string, companyName?: string): Promise<CompanyNewsAnalysis> => {
+    const qs = companyName ? `?name=${encodeURIComponent(companyName)}` : '';
+    return request<CompanyNewsAnalysis>(`/realtime/${encodeURIComponent(symbol)}/news-analysis${qs}`);
+  },
+
   // 11. Combined real-time data (quote + news)
   getFullRealtime: async (symbol: string, companyName?: string): Promise<{
     symbol: string;
@@ -345,6 +562,47 @@ export const apiClient = {
   // 16. SSE live price stream (returns EventSource URL)
   getStreamUrl: (symbol: string): string => {
     return `${API_BASE}/realtime/${encodeURIComponent(symbol)}/stream`;
+  },
+
+  // ── Authentication Endpoints ───────────────────────────────────────────
+  login: async (credentials: { email: string; password: string }): Promise<{ user: any; token: string }> => {
+    return request<{ user: any; token: string }>('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify(credentials),
+    });
+  },
+
+  register: async (data: { name: string; email: string; password: string }): Promise<{ user: any; token: string }> => {
+    return request<{ user: any; token: string }>('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  },
+
+  getCurrentUser: async (): Promise<{ user: any }> => {
+    return request<{ user: any }>('/auth/me');
+  },
+
+  // ── AI Financial Chat Endpoints (RAG + Live Quotes) ────────────────────
+  sendChatMessage: async (message: string, sessionId?: string): Promise<SendChatMessageResponse> => {
+    return request<SendChatMessageResponse>('/chat/message', {
+      method: 'POST',
+      body: JSON.stringify({ message, sessionId }),
+    });
+  },
+
+  getChatSessions: async (): Promise<ChatSession[]> => {
+    return request<ChatSession[]>('/chat/sessions');
+  },
+
+  getChatSessionMessages: async (sessionId: string): Promise<ChatMessage[]> => {
+    return request<ChatMessage[]>(`/chat/sessions/${encodeURIComponent(sessionId)}/messages`);
+  },
+
+  deleteChatSession: async (sessionId: string): Promise<{ success: boolean }> => {
+    return request<{ success: boolean }>(`/chat/sessions/${encodeURIComponent(sessionId)}`, {
+      method: 'DELETE',
+    });
   },
 };
 

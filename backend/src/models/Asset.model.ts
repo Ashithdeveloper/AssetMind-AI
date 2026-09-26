@@ -3,14 +3,21 @@ import mongoose, { Schema, Document } from 'mongoose';
 export interface IAsset extends Document {
   _id: mongoose.Types.ObjectId;
   symbol: string;
+  nseSymbol?: string;
+  bseCode?: string;
   companyName: string;
   exchange?: string;
   country?: string;
+  currency?: string;
   sector?: string;
   industry?: string;
   description?: string;
   logoUrl?: string;
   website?: string;
+  dataSource?: string;
+  currentPrice?: number;
+  marketCapitalization?: number;
+  lastScrapedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -24,6 +31,17 @@ const AssetSchema = new Schema<IAsset>(
       trim: true,
       index: true,
     },
+    nseSymbol: {
+      type: String,
+      uppercase: true,
+      trim: true,
+      index: true,
+    },
+    bseCode: {
+      type: String,
+      trim: true,
+      index: true,
+    },
     companyName: {
       type: String,
       required: true,
@@ -33,11 +51,17 @@ const AssetSchema = new Schema<IAsset>(
     exchange: {
       type: String,
       trim: true,
-      default: 'UNKNOWN',
+      default: 'NSE',
     },
     country: {
       type: String,
       trim: true,
+      default: 'India',
+    },
+    currency: {
+      type: String,
+      trim: true,
+      default: 'INR',
     },
     sector: {
       type: String,
@@ -58,6 +82,20 @@ const AssetSchema = new Schema<IAsset>(
     website: {
       type: String,
       trim: true,
+    },
+    dataSource: {
+      type: String,
+      trim: true,
+      default: 'Screener.in',
+    },
+    currentPrice: {
+      type: Number,
+    },
+    marketCapitalization: {
+      type: Number,
+    },
+    lastScrapedAt: {
+      type: Date,
     },
   },
   {

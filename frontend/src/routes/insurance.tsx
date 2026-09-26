@@ -8,7 +8,22 @@ import { fmtINR, insurancePlans } from "@/lib/market-data";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/insurance")({
-  head: () => ({ meta: [{ title: "Insurance — AssetMind AI" }, { name: "description", content: "Compare Indian term life, health, ULIP, and motor insurance plans by premium, cover, and claim ratio." }, { property: "og:title", content: "Insurance — AssetMind AI" }, { property: "og:description", content: "Indian insurance plan comparison with premiums, cover, and claim settlement ratios." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
+  head: () => ({
+    meta: [
+      { title: "Insurance — AssetMind AI" },
+      {
+        name: "description",
+        content: "Compare Indian term life, health, ULIP, and motor insurance plans by premium, cover, and claim ratio.",
+      },
+      { property: "og:title", content: "Insurance — AssetMind AI" },
+      {
+        property: "og:description",
+        content: "Indian insurance plan comparison with premiums, cover, and claim settlement ratios.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: InsurancePage,
 });
 

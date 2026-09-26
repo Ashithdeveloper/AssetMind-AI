@@ -23,7 +23,7 @@ export class SecEdgarAdapter extends BaseAdapter implements SourceAdapter {
       baseUrl: this.baseUrl,
       supportedMetrics: this.supportedMetrics,
       supportedScrapers: ['playwright', 'scrapingbee'],
-      description: 'Official SEC EDGAR filings, 10-K / 10-Q regulatory disclosures, balance sheets, and reports.',
+      description: '[US SEC Filings Only - Inactive for Indian Stock Market] Official SEC EDGAR 10-K / 10-Q regulatory disclosures.',
     };
   }
 

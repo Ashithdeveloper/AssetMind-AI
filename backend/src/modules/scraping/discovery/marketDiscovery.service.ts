@@ -177,28 +177,14 @@ export class MarketDiscoveryService {
   }
 
   /**
-   * Discover companies live across both Indian and Global sources directly from website listings
+   * Discover companies live strictly for Indian equities directly from Screener.in
    */
   public static async discoverLiveCompanies(options: {
     region?: 'india' | 'global' | 'all';
     limit?: number;
   } = {}): Promise<DiscoveredCompany[]> {
-    const region = options.region || 'all';
     const limit = options.limit || 80;
-    const halfLimit = Math.ceil(limit / 2);
-
-    let results: DiscoveredCompany[] = [];
-
-    if (region === 'india' || region === 'all') {
-      const indiaList = await this.discoverIndianCompanies(region === 'all' ? halfLimit : limit);
-      results.push(...indiaList);
-    }
-
-    if (region === 'global' || region === 'all') {
-      const globalList = await this.discoverGlobalCompanies(region === 'all' ? halfLimit : limit);
-      results.push(...globalList);
-    }
-
-    return results.slice(0, limit);
+    // Strictly Indian companies only
+    return this.discoverIndianCompanies(limit);
   }
 }

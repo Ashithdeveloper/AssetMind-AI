@@ -7,7 +7,22 @@ import { fmtChange, fmtINR, realAssets } from "@/lib/market-data";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/assets")({
-  head: () => ({ meta: [{ title: "Real-World Assets — AssetMind AI" }, { name: "description", content: "Track gold, silver, Indian real estate, and listed REITs in one place." }, { property: "og:title", content: "Real-World Assets — AssetMind AI" }, { property: "og:description", content: "Gold, silver, real estate, and REIT prices for Indian investors." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
+  head: () => ({
+    meta: [
+      { title: "Real-World Assets — AssetMind AI" },
+      {
+        name: "description",
+        content: "Track gold, silver, Indian real estate, and listed REITs in one place.",
+      },
+      { property: "og:title", content: "Real-World Assets — AssetMind AI" },
+      {
+        property: "og:description",
+        content: "Gold, silver, real estate, and REIT prices for Indian investors.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: AssetsPage,
 });
 

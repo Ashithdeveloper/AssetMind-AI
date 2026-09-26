@@ -7,6 +7,7 @@ import { ragRoutes } from '../modules/rag/rag.routes';
 import { companyRoutes } from '../modules/companies/company.routes';
 import { analysisRoutes } from '../modules/analysis/analysis.routes';
 import { realtimeRoutes } from '../modules/realtime/realtime.routes';
+import { chatRoutes } from '../modules/chat/chat.routes';
 import { sendSuccess } from '../utils/apiResponse';
 
 const router = Router();
@@ -20,9 +21,9 @@ router.get('/health', (req, res) => {
       status: 'UP',
       timestamp: new Date().toISOString(),
       database: dbStatus,
-      version: '3.0.0 (Real-Time Prices + News + RAG Analysis)',
+      version: '3.1.0 (Real-Time Stock Quotes + Qdrant RAG AI Chat)',
     },
-    'AssetMind AI Backend is operating normally with Real-Time Prices, Live News, and AI Analysis',
+    'AssetMind AI Backend is operating normally with Real-Time Stock Quotes, Live News, and RAG AI Chat',
     200
   );
 });
@@ -35,5 +36,6 @@ router.use('/rag', ragRoutes);
 router.use('/companies', companyRoutes);
 router.use('/analysis', analysisRoutes);
 router.use('/realtime', realtimeRoutes);
+router.use('/chat', chatRoutes);
 
 export const apiRoutes = router;

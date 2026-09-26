@@ -70,19 +70,19 @@ async function runTestSuite() {
         // 2. FEATURE: Company Search (GET /api/companies/search?q=)
         // -------------------------------------------------------------
         console.log('\n--- 2. Testing GET /api/companies/search ---');
-        const searchRes = await axios_1.default.get(`${BASE_URL}/companies/search?q=Apple`);
-        assert(searchRes.data.data.companies.length > 0, 'Search by name "Apple" returns results');
-        assert(searchRes.data.data.companies.some((c) => c.symbol === 'AAPL'), 'Found AAPL for "Apple" query');
-        const symbolSearchRes = await axios_1.default.get(`${BASE_URL}/companies/search?q=NVDA`);
-        assert(symbolSearchRes.data.data.companies.some((c) => c.symbol === 'NVDA'), 'Found NVDA by ticker symbol');
+        const searchRes = await axios_1.default.get(`${BASE_URL}/companies/search?q=Tata`);
+        assert(searchRes.data.data.companies.length > 0, 'Search by name "Tata" returns results');
+        assert(searchRes.data.data.companies.some((c) => c.symbol === 'TCS'), 'Found TCS for "Tata" query');
+        const symbolSearchRes = await axios_1.default.get(`${BASE_URL}/companies/search?q=INFY`);
+        assert(symbolSearchRes.data.data.companies.some((c) => c.symbol === 'INFY'), 'Found INFY by ticker symbol');
         // -------------------------------------------------------------
         // 3. FEATURE: Company Profile (GET /api/companies/:symbol)
         // -------------------------------------------------------------
         console.log('\n--- 3. Testing GET /api/companies/:symbol ---');
-        const profileRes = await axios_1.default.get(`${BASE_URL}/companies/AAPL`);
+        const profileRes = await axios_1.default.get(`${BASE_URL}/companies/TCS`);
         const prof = profileRes.data.data;
-        assert(prof.symbol === 'AAPL', 'Profile symbol is AAPL');
-        assert(prof.companyName.includes('Apple'), 'Profile companyName is Apple Inc.');
+        assert(prof.symbol === 'TCS', 'Profile symbol is TCS');
+        assert(prof.companyName.includes('Tata'), 'Profile companyName includes Tata');
         assert(!!prof.sector, 'Profile includes sector', prof.sector);
         assert(!!prof.website, 'Profile includes website', prof.website);
         assert(!!prof.latestReportingPeriod, 'Profile includes latest reporting period', prof.latestReportingPeriod);
@@ -90,8 +90,8 @@ async function runTestSuite() {
         // 4. FEATURE: Historical Share Price (GET /api/companies/:symbol/price-history)
         // -------------------------------------------------------------
         console.log('\n--- 4. Testing GET /api/companies/:symbol/price-history ---');
-        const historyRes = await axios_1.default.get(`${BASE_URL}/companies/AAPL/price-history?period=1M`);
-        assert(historyRes.data.data.symbol === 'AAPL', 'History symbol is AAPL');
+        const historyRes = await axios_1.default.get(`${BASE_URL}/companies/TCS/price-history?period=1M`);
+        assert(historyRes.data.data.symbol === 'TCS', 'History symbol is TCS');
         assert(historyRes.data.data.period === '1M', 'History period is 1M');
         assert(historyRes.data.data.data.length > 0, 'Contains chronological daily price points', `Points count: ${historyRes.data.data.data.length}`);
         const bar = historyRes.data.data.data[0];
@@ -105,9 +105,9 @@ async function runTestSuite() {
         // 5. FEATURE: Financial Metrics (GET /api/companies/:symbol/financials)
         // -------------------------------------------------------------
         console.log('\n--- 5. Testing GET /api/companies/:symbol/financials ---');
-        const finRes = await axios_1.default.get(`${BASE_URL}/companies/AAPL/financials`);
+        const finRes = await axios_1.default.get(`${BASE_URL}/companies/TCS/financials`);
         const fin = finRes.data.data;
-        assert(fin.symbol === 'AAPL', 'Financial metrics symbol is AAPL');
+        assert(fin.symbol === 'TCS', 'Financial metrics symbol is TCS');
         assert('freeCashFlow' in fin, 'Contains Free Cash Flow metric');
         assert('returnOnEquity' in fin, 'Contains Return on Equity (ROE)');
         assert('debtToEquity' in fin, 'Contains Debt-to-Equity');
@@ -121,9 +121,9 @@ async function runTestSuite() {
         // 6. FEATURE: Buy Analysis (POST /api/analysis/:symbol/buy)
         // -------------------------------------------------------------
         console.log('\n--- 6. Testing POST /api/analysis/:symbol/buy ---');
-        const buyRes = await axios_1.default.post(`${BASE_URL}/analysis/AAPL/buy`);
+        const buyRes = await axios_1.default.post(`${BASE_URL}/analysis/TCS/buy`);
         assert(buyRes.status === 201, 'Buy analysis returns HTTP 201');
-        assert(buyRes.data.data.symbol === 'AAPL', 'Buy analysis symbol is AAPL');
+        assert(buyRes.data.data.symbol === 'TCS', 'Buy analysis symbol is TCS');
         assert(buyRes.data.data.analysisType === 'BUY', 'Analysis type is BUY');
         assert(!!buyRes.data.data.reportMarkdown, 'Generated markdown report');
         assert(buyRes.data.data.sourceReferences.length > 0, 'Includes source references');
@@ -132,23 +132,23 @@ async function runTestSuite() {
         // 7. FEATURE: Sell Analysis (POST /api/analysis/:symbol/sell)
         // -------------------------------------------------------------
         console.log('\n--- 7. Testing POST /api/analysis/:symbol/sell ---');
-        const sellRes = await axios_1.default.post(`${BASE_URL}/analysis/AAPL/sell`, {
-            purchasePrice: 195.5,
+        const sellRes = await axios_1.default.post(`${BASE_URL}/analysis/TCS/sell`, {
+            purchasePrice: 2000,
             quantity: 50,
             investmentDate: '2024-01-15',
-            portfolioValue: 50000,
+            portfolioValue: 100000,
         });
         assert(sellRes.status === 201, 'Sell analysis returns HTTP 201');
-        assert(sellRes.data.data.symbol === 'AAPL', 'Sell analysis symbol is AAPL');
+        assert(sellRes.data.data.symbol === 'TCS', 'Sell analysis symbol is TCS');
         assert(sellRes.data.data.analysisType === 'SELL', 'Analysis type is SELL');
         assert(!!sellRes.data.data.personalInvestmentAnalysis, 'Includes personal investment mistake / profit-loss analysis');
         assert(sellRes.data.data.personalInvestmentAnalysis.unrealizedPnl !== undefined, 'Calculated unrealized P&L');
-        console.log(`  Investor P&L: $${sellRes.data.data.personalInvestmentAnalysis.unrealizedPnl} (${sellRes.data.data.personalInvestmentAnalysis.returnPercent}%)`);
+        console.log(`  Investor P&L: ₹${sellRes.data.data.personalInvestmentAnalysis.unrealizedPnl} (${sellRes.data.data.personalInvestmentAnalysis.returnPercent}%)`);
         // -------------------------------------------------------------
         // 8. FEATURE: Historical Reports (GET /api/analysis/reports)
         // -------------------------------------------------------------
         console.log('\n--- 8. Testing GET /api/analysis/reports ---');
-        const reportsRes = await axios_1.default.get(`${BASE_URL}/analysis/reports?symbol=AAPL`);
+        const reportsRes = await axios_1.default.get(`${BASE_URL}/analysis/reports?symbol=TCS`);
         assert(reportsRes.data.data.count >= 2, 'Retrieved stored reports from MongoDB', `Count: ${reportsRes.data.data.count}`);
         console.log('\n===============================================================');
         console.log(`🎉 ALL ${passed}/${total} TEST SUITE ASSERTIONS PASSED!`);

@@ -7,7 +7,19 @@ import { applyTheme, isThemeId, themes, type ThemeId } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/settings")({
-  head: () => ({ meta: [{ title: "Settings — AssetMind AI" }, { name: "description", content: "Manage your profile, alerts and research preferences." }, { property: "og:title", content: "Settings — AssetMind AI" }, { property: "og:description", content: "Account and preference settings." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
+  head: () => ({
+    meta: [
+      { title: "Settings — AssetMind AI" },
+      {
+        name: "description",
+        content: "Manage your profile, alerts and research preferences.",
+      },
+      { property: "og:title", content: "Settings — AssetMind AI" },
+      { property: "og:description", content: "Account and preference settings." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: SettingsPage,
 });
 

@@ -55,7 +55,7 @@ class SecEdgarAdapter extends base_adapter_1.BaseAdapter {
             baseUrl: this.baseUrl,
             supportedMetrics: this.supportedMetrics,
             supportedScrapers: ['playwright', 'scrapingbee'],
-            description: 'Official SEC EDGAR filings, 10-K / 10-Q regulatory disclosures, balance sheets, and reports.',
+            description: '[US SEC Filings Only - Inactive for Indian Stock Market] Official SEC EDGAR 10-K / 10-Q regulatory disclosures.',
         };
     }
     buildUrl(symbol) {

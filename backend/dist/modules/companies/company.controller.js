@@ -98,6 +98,40 @@ class CompanyController {
             next(err);
         }
     }
+    /**
+     * GET /api/companies/:symbol/statements
+     * Full quarterly, annual P&L, balance sheet, and cash flow statements from Screener.in
+     */
+    static async getStatements(req, res, next) {
+        try {
+            const symbol = String(req.params.symbol || '');
+            if (!symbol.trim()) {
+                throw new apiResponse_1.AppError('Stock symbol is required', 400, 'SYMBOL_REQUIRED');
+            }
+            const statements = await company_service_1.CompanyService.getStatements(symbol);
+            (0, apiResponse_1.sendSuccess)(res, statements, `Financial statements for ${symbol} retrieved successfully`, 200);
+        }
+        catch (err) {
+            next(err);
+        }
+    }
+    /**
+     * POST /api/companies/:symbol/refresh
+     * On-demand live refresh of company fundamentals and statements directly from Screener.in
+     */
+    static async refreshCompany(req, res, next) {
+        try {
+            const symbol = String(req.params.symbol || '');
+            if (!symbol.trim()) {
+                throw new apiResponse_1.AppError('Stock symbol is required', 400, 'SYMBOL_REQUIRED');
+            }
+            const refreshed = await company_service_1.CompanyService.refreshCompany(symbol);
+            (0, apiResponse_1.sendSuccess)(res, refreshed, `Successfully refreshed ${symbol} from Screener.in`, 200);
+        }
+        catch (err) {
+            next(err);
+        }
+    }
 }
 exports.CompanyController = CompanyController;
 //# sourceMappingURL=company.controller.js.map

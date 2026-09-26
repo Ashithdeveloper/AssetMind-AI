@@ -19,7 +19,7 @@ export const TOP_80_COMPANIES: CompanyCatalogItem[] = [
     country: 'India',
     sector: 'Energy & Conglomerate',
     industry: 'Oil, Gas & Retail & Telecom',
-    sources: ['screener-in', 'yahoo-finance', 'stockanalysis'],
+    sources: ['screener-in', 'yahoo-finance'],
   },
   {
     symbol: 'TCS',
@@ -28,7 +28,7 @@ export const TOP_80_COMPANIES: CompanyCatalogItem[] = [
     country: 'India',
     sector: 'Technology',
     industry: 'IT Services & Consulting',
-    sources: ['screener-in', 'yahoo-finance', 'stockanalysis'],
+    sources: ['screener-in', 'yahoo-finance'],
   },
   {
     symbol: 'HDFCBANK',
@@ -37,7 +37,7 @@ export const TOP_80_COMPANIES: CompanyCatalogItem[] = [
     country: 'India',
     sector: 'Financial Services',
     industry: 'Private Banking',
-    sources: ['screener-in', 'yahoo-finance', 'stockanalysis'],
+    sources: ['screener-in', 'yahoo-finance'],
   },
   {
     symbol: 'INFY',
@@ -46,7 +46,7 @@ export const TOP_80_COMPANIES: CompanyCatalogItem[] = [
     country: 'India',
     sector: 'Technology',
     industry: 'IT Services & Consulting',
-    sources: ['screener-in', 'yahoo-finance', 'sec-edgar'],
+    sources: ['screener-in', 'yahoo-finance'],
   },
   {
     symbol: 'ICICIBANK',
@@ -55,7 +55,7 @@ export const TOP_80_COMPANIES: CompanyCatalogItem[] = [
     country: 'India',
     sector: 'Financial Services',
     industry: 'Private Banking',
-    sources: ['screener-in', 'yahoo-finance', 'stockanalysis'],
+    sources: ['screener-in', 'yahoo-finance'],
   },
   {
     symbol: 'BHARTIARTL',
@@ -64,7 +64,7 @@ export const TOP_80_COMPANIES: CompanyCatalogItem[] = [
     country: 'India',
     sector: 'Telecommunications',
     industry: 'Telecom Services',
-    sources: ['screener-in', 'yahoo-finance', 'stockanalysis'],
+    sources: ['screener-in', 'yahoo-finance'],
   },
   {
     symbol: 'SBIN',
@@ -73,7 +73,7 @@ export const TOP_80_COMPANIES: CompanyCatalogItem[] = [
     country: 'India',
     sector: 'Financial Services',
     industry: 'Public Sector Banking',
-    sources: ['screener-in', 'yahoo-finance', 'stockanalysis'],
+    sources: ['screener-in', 'yahoo-finance'],
   },
   {
     symbol: 'ITC',
@@ -82,7 +82,7 @@ export const TOP_80_COMPANIES: CompanyCatalogItem[] = [
     country: 'India',
     sector: 'Consumer Goods',
     industry: 'FMCG & Hotels',
-    sources: ['screener-in', 'yahoo-finance', 'stockanalysis'],
+    sources: ['screener-in', 'yahoo-finance'],
   },
   {
     symbol: 'HINDUNILVR',
@@ -91,7 +91,7 @@ export const TOP_80_COMPANIES: CompanyCatalogItem[] = [
     country: 'India',
     sector: 'Consumer Goods',
     industry: 'FMCG & Personal Care',
-    sources: ['screener-in', 'yahoo-finance', 'stockanalysis'],
+    sources: ['screener-in', 'yahoo-finance'],
   },
   {
     symbol: 'LT',
@@ -100,7 +100,7 @@ export const TOP_80_COMPANIES: CompanyCatalogItem[] = [
     country: 'India',
     sector: 'Industrials',
     industry: 'Engineering & Construction',
-    sources: ['screener-in', 'yahoo-finance', 'stockanalysis'],
+    sources: ['screener-in', 'yahoo-finance'],
   },
   {
     symbol: 'BAJFINANCE',
@@ -109,7 +109,7 @@ export const TOP_80_COMPANIES: CompanyCatalogItem[] = [
     country: 'India',
     sector: 'Financial Services',
     industry: 'Non-Banking Financial Services',
-    sources: ['screener-in', 'yahoo-finance', 'stockanalysis'],
+    sources: ['screener-in', 'yahoo-finance'],
   },
   {
     symbol: 'MARUTI',
@@ -118,7 +118,7 @@ export const TOP_80_COMPANIES: CompanyCatalogItem[] = [
     country: 'India',
     sector: 'Automotive',
     industry: 'Passenger Vehicles',
-    sources: ['screener-in', 'yahoo-finance', 'stockanalysis'],
+    sources: ['screener-in', 'yahoo-finance'],
   },
   {
     symbol: 'HCLTECH',
@@ -127,7 +127,7 @@ export const TOP_80_COMPANIES: CompanyCatalogItem[] = [
     country: 'India',
     sector: 'Technology',
     industry: 'IT Services & Cloud',
-    sources: ['screener-in', 'yahoo-finance', 'stockanalysis'],
+    sources: ['screener-in', 'yahoo-finance'],
   },
   {
     symbol: 'SUNPHARMA',
@@ -136,7 +136,7 @@ export const TOP_80_COMPANIES: CompanyCatalogItem[] = [
     country: 'India',
     sector: 'Healthcare',
     industry: 'Pharmaceuticals',
-    sources: ['screener-in', 'yahoo-finance', 'stockanalysis'],
+    sources: ['screener-in', 'yahoo-finance'],
   },
   {
     symbol: 'TATAMOTORS',
@@ -145,7 +145,7 @@ export const TOP_80_COMPANIES: CompanyCatalogItem[] = [
     country: 'India',
     sector: 'Automotive',
     industry: 'Automobile Manufacturing',
-    sources: ['screener-in', 'yahoo-finance', 'stockanalysis'],
+    sources: ['screener-in', 'yahoo-finance'],
   },
   {
     symbol: 'KOTAKBANK',
@@ -154,7 +154,7 @@ export const TOP_80_COMPANIES: CompanyCatalogItem[] = [
     country: 'India',
     sector: 'Financial Services',
     industry: 'Private Banking',
-    sources: ['screener-in', 'yahoo-finance', 'stockanalysis'],
+    sources: ['screener-in', 'yahoo-finance'],
   },
   {
     symbol: 'AXISBANK',
@@ -163,7 +163,7 @@ export const TOP_80_COMPANIES: CompanyCatalogItem[] = [
     country: 'India',
     sector: 'Financial Services',
     industry: 'Private Banking',
-    sources: ['screener-in', 'yahoo-finance', 'stockanalysis'],
+    sources: ['screener-in', 'yahoo-finance'],
   },
   {
     symbol: 'TITAN',
@@ -172,7 +172,7 @@ export const TOP_80_COMPANIES: CompanyCatalogItem[] = [
     country: 'India',
     sector: 'Consumer Goods',
     industry: 'Jewelry & Watches',
-    sources: ['screener-in', 'yahoo-finance', 'stockanalysis'],
+    sources: ['screener-in', 'yahoo-finance'],
   },
   {
     symbol: 'ADANIENT',
@@ -181,7 +181,7 @@ export const TOP_80_COMPANIES: CompanyCatalogItem[] = [
     country: 'India',
     sector: 'Energy & Infrastructure',
     industry: 'Trading & Infrastructure',
-    sources: ['screener-in', 'yahoo-finance', 'stockanalysis'],
+    sources: ['screener-in', 'yahoo-finance'],
   },
   {
     symbol: 'NTPC',
@@ -190,7 +190,7 @@ export const TOP_80_COMPANIES: CompanyCatalogItem[] = [
     country: 'India',
     sector: 'Utilities',
     industry: 'Power Generation',
-    sources: ['screener-in', 'yahoo-finance', 'stockanalysis'],
+    sources: ['screener-in', 'yahoo-finance'],
   },
   {
     symbol: 'ONGC',
@@ -199,7 +199,7 @@ export const TOP_80_COMPANIES: CompanyCatalogItem[] = [
     country: 'India',
     sector: 'Energy',
     industry: 'Oil & Gas Exploration',
-    sources: ['screener-in', 'yahoo-finance', 'stockanalysis'],
+    sources: ['screener-in', 'yahoo-finance'],
   },
   {
     symbol: 'POWERGRID',
@@ -208,7 +208,7 @@ export const TOP_80_COMPANIES: CompanyCatalogItem[] = [
     country: 'India',
     sector: 'Utilities',
     industry: 'Power Transmission',
-    sources: ['screener-in', 'yahoo-finance', 'stockanalysis'],
+    sources: ['screener-in', 'yahoo-finance'],
   },
   {
     symbol: 'TATASTEEL',
@@ -217,7 +217,7 @@ export const TOP_80_COMPANIES: CompanyCatalogItem[] = [
     country: 'India',
     sector: 'Basic Materials',
     industry: 'Steel Manufacturing',
-    sources: ['screener-in', 'yahoo-finance', 'stockanalysis'],
+    sources: ['screener-in', 'yahoo-finance'],
   },
   {
     symbol: 'WIPRO',
@@ -226,7 +226,7 @@ export const TOP_80_COMPANIES: CompanyCatalogItem[] = [
     country: 'India',
     sector: 'Technology',
     industry: 'IT Services',
-    sources: ['screener-in', 'yahoo-finance', 'sec-edgar'],
+    sources: ['screener-in', 'yahoo-finance'],
   },
   {
     symbol: 'COALINDIA',
@@ -235,7 +235,7 @@ export const TOP_80_COMPANIES: CompanyCatalogItem[] = [
     country: 'India',
     sector: 'Energy & Mining',
     industry: 'Coal Mining',
-    sources: ['screener-in', 'yahoo-finance', 'stockanalysis'],
+    sources: ['screener-in', 'yahoo-finance'],
   },
   {
     symbol: 'BAJAJFINSV',
@@ -244,7 +244,7 @@ export const TOP_80_COMPANIES: CompanyCatalogItem[] = [
     country: 'India',
     sector: 'Financial Services',
     industry: 'Insurance & Financing',
-    sources: ['screener-in', 'yahoo-finance', 'stockanalysis'],
+    sources: ['screener-in', 'yahoo-finance'],
   },
   {
     symbol: 'M&M',
@@ -253,7 +253,7 @@ export const TOP_80_COMPANIES: CompanyCatalogItem[] = [
     country: 'India',
     sector: 'Automotive',
     industry: 'Farm & Utility Vehicles',
-    sources: ['screener-in', 'yahoo-finance', 'stockanalysis'],
+    sources: ['screener-in', 'yahoo-finance'],
   },
   {
     symbol: 'ASIANPAINT',
@@ -262,7 +262,7 @@ export const TOP_80_COMPANIES: CompanyCatalogItem[] = [
     country: 'India',
     sector: 'Consumer Goods',
     industry: 'Paints & Coatings',
-    sources: ['screener-in', 'yahoo-finance', 'stockanalysis'],
+    sources: ['screener-in', 'yahoo-finance'],
   },
   {
     symbol: 'ULTRACEMCO',
@@ -271,7 +271,7 @@ export const TOP_80_COMPANIES: CompanyCatalogItem[] = [
     country: 'India',
     sector: 'Basic Materials',
     industry: 'Cement & Building Materials',
-    sources: ['screener-in', 'yahoo-finance', 'stockanalysis'],
+    sources: ['screener-in', 'yahoo-finance'],
   },
   {
     symbol: 'NESTLEIND',
@@ -280,7 +280,7 @@ export const TOP_80_COMPANIES: CompanyCatalogItem[] = [
     country: 'India',
     sector: 'Consumer Goods',
     industry: 'Packaged Foods',
-    sources: ['screener-in', 'yahoo-finance', 'stockanalysis'],
+    sources: ['screener-in', 'yahoo-finance'],
   },
   {
     symbol: 'GRASIM',
@@ -289,7 +289,7 @@ export const TOP_80_COMPANIES: CompanyCatalogItem[] = [
     country: 'India',
     sector: 'Basic Materials',
     industry: 'Textiles & Chemicals',
-    sources: ['screener-in', 'yahoo-finance', 'stockanalysis'],
+    sources: ['screener-in', 'yahoo-finance'],
   },
   {
     symbol: 'JSWSTEEL',
@@ -298,7 +298,7 @@ export const TOP_80_COMPANIES: CompanyCatalogItem[] = [
     country: 'India',
     sector: 'Basic Materials',
     industry: 'Steel & Alloys',
-    sources: ['screener-in', 'yahoo-finance', 'stockanalysis'],
+    sources: ['screener-in', 'yahoo-finance'],
   },
   {
     symbol: 'TECHM',
@@ -307,7 +307,7 @@ export const TOP_80_COMPANIES: CompanyCatalogItem[] = [
     country: 'India',
     sector: 'Technology',
     industry: 'Telecom IT & Software',
-    sources: ['screener-in', 'yahoo-finance', 'stockanalysis'],
+    sources: ['screener-in', 'yahoo-finance'],
   },
   {
     symbol: 'HDFCLIFE',
@@ -316,7 +316,7 @@ export const TOP_80_COMPANIES: CompanyCatalogItem[] = [
     country: 'India',
     sector: 'Financial Services',
     industry: 'Life Insurance',
-    sources: ['screener-in', 'yahoo-finance', 'stockanalysis'],
+    sources: ['screener-in', 'yahoo-finance'],
   },
   {
     symbol: 'SBILIFE',
@@ -325,7 +325,7 @@ export const TOP_80_COMPANIES: CompanyCatalogItem[] = [
     country: 'India',
     sector: 'Financial Services',
     industry: 'Life Insurance',
-    sources: ['screener-in', 'yahoo-finance', 'stockanalysis'],
+    sources: ['screener-in', 'yahoo-finance'],
   },
   {
     symbol: 'BRITANNIA',
@@ -334,7 +334,7 @@ export const TOP_80_COMPANIES: CompanyCatalogItem[] = [
     country: 'India',
     sector: 'Consumer Goods',
     industry: 'Bakery & Dairy Products',
-    sources: ['screener-in', 'yahoo-finance', 'stockanalysis'],
+    sources: ['screener-in', 'yahoo-finance'],
   },
   {
     symbol: 'CIPLA',
@@ -343,7 +343,7 @@ export const TOP_80_COMPANIES: CompanyCatalogItem[] = [
     country: 'India',
     sector: 'Healthcare',
     industry: 'Pharmaceuticals & Generics',
-    sources: ['screener-in', 'yahoo-finance', 'stockanalysis'],
+    sources: ['screener-in', 'yahoo-finance'],
   },
   {
     symbol: 'DRREDDY',
@@ -352,7 +352,7 @@ export const TOP_80_COMPANIES: CompanyCatalogItem[] = [
     country: 'India',
     sector: 'Healthcare',
     industry: 'Pharmaceuticals',
-    sources: ['screener-in', 'yahoo-finance', 'sec-edgar'],
+    sources: ['screener-in', 'yahoo-finance'],
   },
   {
     symbol: 'EICHERMOT',
@@ -361,7 +361,7 @@ export const TOP_80_COMPANIES: CompanyCatalogItem[] = [
     country: 'India',
     sector: 'Automotive',
     industry: 'Motorcycles & Commercial Vehicles',
-    sources: ['screener-in', 'yahoo-finance', 'stockanalysis'],
+    sources: ['screener-in', 'yahoo-finance'],
   },
   {
     symbol: 'TRENT',
@@ -370,7 +370,7 @@ export const TOP_80_COMPANIES: CompanyCatalogItem[] = [
     country: 'India',
     sector: 'Consumer Goods',
     industry: 'Retail & Fashion (Westside/Zudio)',
-    sources: ['screener-in', 'yahoo-finance', 'stockanalysis'],
+    sources: ['screener-in', 'yahoo-finance'],
   },
   {
     symbol: 'ZOMATO',
@@ -379,7 +379,7 @@ export const TOP_80_COMPANIES: CompanyCatalogItem[] = [
     country: 'India',
     sector: 'Technology & Consumer',
     industry: 'Food Delivery & Quick Commerce (Blinkit)',
-    sources: ['screener-in', 'yahoo-finance', 'stockanalysis'],
+    sources: ['screener-in', 'yahoo-finance'],
   },
   {
     symbol: 'POLYCAB',
@@ -388,7 +388,7 @@ export const TOP_80_COMPANIES: CompanyCatalogItem[] = [
     country: 'India',
     sector: 'Industrials',
     industry: 'Wires, Cables & Fast Moving Electrical Goods',
-    sources: ['screener-in', 'yahoo-finance', 'stockanalysis'],
+    sources: ['screener-in', 'yahoo-finance'],
   },
   {
     symbol: 'OLAELEC',
@@ -397,7 +397,7 @@ export const TOP_80_COMPANIES: CompanyCatalogItem[] = [
     country: 'India',
     sector: 'Electric Vehicles',
     industry: 'Electric Vehicles & Clean Mobility Tech',
-    sources: ['screener-in', 'yahoo-finance', 'stockanalysis'],
+    sources: ['screener-in', 'yahoo-finance'],
   },
   {
     symbol: 'ADANIPORTS',
@@ -406,7 +406,7 @@ export const TOP_80_COMPANIES: CompanyCatalogItem[] = [
     country: 'India',
     sector: 'Energy & Infrastructure',
     industry: 'Ports & Logistics',
-    sources: ['screener-in', 'yahoo-finance', 'stockanalysis'],
+    sources: ['screener-in', 'yahoo-finance'],
   },
   {
     symbol: 'ADANIGREEN',
@@ -415,7 +415,7 @@ export const TOP_80_COMPANIES: CompanyCatalogItem[] = [
     country: 'India',
     sector: 'Energy & Infrastructure',
     industry: 'Renewable Solar & Wind Energy',
-    sources: ['screener-in', 'yahoo-finance', 'stockanalysis'],
+    sources: ['screener-in', 'yahoo-finance'],
   },
   {
     symbol: 'ADANIPOWER',
@@ -424,7 +424,7 @@ export const TOP_80_COMPANIES: CompanyCatalogItem[] = [
     country: 'India',
     sector: 'Energy & Infrastructure',
     industry: 'Power Generation & Utilities',
-    sources: ['screener-in', 'yahoo-finance', 'stockanalysis'],
+    sources: ['screener-in', 'yahoo-finance'],
   },
   {
     symbol: 'TATACONSUM',
@@ -433,6 +433,6 @@ export const TOP_80_COMPANIES: CompanyCatalogItem[] = [
     country: 'India',
     sector: 'Consumer Goods',
     industry: 'FMCG, Tea, Coffee & Beverages',
-    sources: ['screener-in', 'yahoo-finance', 'stockanalysis'],
+    sources: ['screener-in', 'yahoo-finance'],
   },
 ];
