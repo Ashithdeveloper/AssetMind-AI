@@ -538,7 +538,7 @@ export function InstitutionalReportViewer({
           const tableBlock = section.blocks.find((b) => b.type === "table") as
             { type: "table"; headers: string[]; rows: string[][] } | undefined;
           const bulletBlock = section.blocks.find((b) => b.type === "bullet_list") as
-            { type: "bullet_list"; items: Array<any> } | undefined;
+            { type: "bullet_list"; items: Array<{ label?: string; text: string }> } | undefined;
 
           const summaryTag = tableBlock
             ? `${tableBlock.rows.length} Metrics Audited`

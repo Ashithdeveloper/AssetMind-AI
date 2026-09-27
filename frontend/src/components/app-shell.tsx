@@ -38,7 +38,6 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
         <p className="px-2 pb-2 pt-4 font-mono text-[9px] text-muted-foreground">SYSTEM</p>
         <Link to="/settings" onClick={onClose} className={linkCls} activeProps={{ className: activeCls }}><Settings className="size-4" />Settings</Link>
       </nav>
-      <div className="p-3"><div className="panel-soft rounded-md border border-border p-3"><p className="font-mono text-[9px] text-muted-foreground">DEMO ENVIRONMENT</p><p className="mt-1.5 text-[11px] leading-snug text-foreground/60">Informational data only. Not investment advice.</p></div></div>
     </aside>
   </>;
 }

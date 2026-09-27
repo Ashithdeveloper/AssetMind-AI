@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 
 export type Company = {
   ticker: string;
@@ -79,46 +79,202 @@ export const companies: [Company, ...Company[]] = [
   base({ ticker: "TATASTEEL", name: "Tata Steel Ltd", exchange: "NSE", country: "India", countryCode: "IN", sector: "Basic Materials", price: 187.97, change: -0.03, marketCap: "₹1.90L Cr", capValue: 190, trend: [186, 187, 188, 188, 187] }, { pe: 45.0, revenue: "₹2.3L Cr", margin: 4.2, debtEquity: 0.94, dividend: 1.8, risk: "High", summary: "India's largest steelmaker with integrated operations spanning mining, manufacturing, and global distribution." }),
 ];
 
-export const findCompany = (ticker: string) => {
-  const found = companies.find((c) => c.ticker.toLowerCase() === ticker.toLowerCase());
+export type WatchlistStockMeta = {
+  ticker: string;
+  name?: string;
+  exchange?: string;
+  price?: number;
+  change?: number;
+  sector?: string;
+  marketCap?: string;
+  pe?: number;
+};
+
+const KEY = "assetmind-watchlist";
+const META_KEY = "assetmind-watchlist-meta";
+
+export const normalizeTicker = (ticker: string): string => {
+  if (!ticker) return "";
+  return ticker.trim().toUpperCase().replace(/\.(NS|BO)$/i, "");
+};
+
+export const getWatchlistMetaMap = (): Record<string, WatchlistStockMeta> => {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = localStorage.getItem(META_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {
+    // fallback to empty
+  }
+  return {};
+};
+
+export const saveWatchlistMeta = (meta: WatchlistStockMeta) => {
+  if (typeof window === "undefined" || !meta.ticker) return;
+  try {
+    const key = normalizeTicker(meta.ticker);
+    const existing = getWatchlistMetaMap();
+    existing[key] = {
+      ...existing[key],
+      ...meta,
+      ticker: key,
+    };
+    localStorage.setItem(META_KEY, JSON.stringify(existing));
+  } catch (e) {
+    console.error("Failed to save watchlist metadata", e);
+  }
+};
+
+export const getSavedWatchlist = (): string[] => {
+  if (typeof window === "undefined") return ["RELIANCE", "TCS", "ZOMATO"];
+  try {
+    const saved = localStorage.getItem(KEY);
+    if (saved !== null) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed)) {
+        return parsed.map((s) => normalizeTicker(String(s))).filter(Boolean);
+      }
+    }
+  } catch (e) {
+    console.error("Failed to load watchlist from localStorage", e);
+  }
+  return ["RELIANCE", "TCS", "ZOMATO"];
+};
+
+export const findCompany = (ticker: string): Company => {
+  const norm = normalizeTicker(ticker);
+  const found = companies.find((c) => normalizeTicker(c.ticker) === norm);
   if (found) return found;
+
+  const metaMap = getWatchlistMetaMap();
+  const cached = metaMap[norm];
+  const p = cached?.price ?? 1000;
+
   return {
-    ticker: ticker.toUpperCase(),
-    name: ticker.toUpperCase(),
-    exchange: "NSE",
+    ticker: norm,
+    name: cached?.name || norm,
+    exchange: cached?.exchange || "NSE",
     country: "India",
     countryCode: "IN",
-    sector: "Indian Equity",
-    price: 1000,
-    change: 0.0,
-    marketCap: "₹10,000 Cr",
+    sector: cached?.sector || "Indian Equity",
+    price: p,
+    change: cached?.change ?? 0.0,
+    marketCap: cached?.marketCap || "₹10,000 Cr",
     capValue: 100,
-    trend: [980, 990, 995, 1000],
-    pe: 20,
+    trend: [p * 0.98, p * 0.99, p * 0.97, p * 1.01, p],
+    pe: cached?.pe || 20,
     revenue: "₹5,000 Cr",
     margin: 15,
     debtEquity: 0.5,
     dividend: 1.0,
     risk: "Medium" as const,
-    summary: `Indian corporate enterprise ${ticker.toUpperCase()} with automated financial intelligence and live market analytics.`,
+    summary: `Indian corporate enterprise ${norm} with automated financial intelligence and live market analytics.`,
   };
 };
 
-const KEY = "assetmind-watchlist";
 export function useWatchlist() {
-  const [list, setList] = useState<string[]>(["RELIANCE", "TCS", "ZOMATO"]);
+  const [list, setList] = useState<string[]>(getSavedWatchlist);
+
+  // Derive O(1) lookup Set reactively from list state
+  const set = useMemo(() => new Set(list.map(normalizeTicker)), [list]);
+
   useEffect(() => {
-    const saved = localStorage.getItem(KEY);
-    if (saved) setList(JSON.parse(saved));
+    // Re-sync from localStorage when mounted on client
+    setList(getSavedWatchlist());
+
+    const handleSync = () => {
+      setList(getSavedWatchlist());
+    };
+
+    window.addEventListener("storage", handleSync);
+    window.addEventListener("assetmind-watchlist-updated", handleSync);
+    return () => {
+      window.removeEventListener("storage", handleSync);
+      window.removeEventListener("assetmind-watchlist-updated", handleSync);
+    };
   }, []);
-  const toggle = (ticker: string) =>
-    setList((cur) => {
-      const next = cur.includes(ticker) ? cur.filter((t) => t !== ticker) : [...cur, ticker];
+
+  const has = useCallback(
+    (ticker: string) => {
+      if (!ticker) return false;
+      return set.has(normalizeTicker(ticker));
+    },
+    [set]
+  );
+
+  const add = useCallback((ticker: string, meta?: Partial<WatchlistStockMeta>) => {
+    const norm = normalizeTicker(ticker);
+    if (!norm) return;
+
+    const currentList = getSavedWatchlist();
+    if (currentList.some((item) => normalizeTicker(item) === norm)) return;
+
+    const next = [...currentList, norm];
+    try {
       localStorage.setItem(KEY, JSON.stringify(next));
-      return next;
-    });
-  return { list, toggle, has: (t: string) => list.includes(t) };
+      if (meta) {
+        saveWatchlistMeta({ ticker: norm, ...meta });
+      }
+      window.dispatchEvent(new CustomEvent("assetmind-watchlist-updated", { detail: next }));
+    } catch (err) {
+      console.error("Failed to save watchlist to localStorage:", err);
+    }
+    setList(next);
+  }, []);
+
+  const remove = useCallback((ticker: string) => {
+    const norm = normalizeTicker(ticker);
+    if (!norm) return;
+
+    const currentList = getSavedWatchlist();
+    const next = currentList.filter((item) => normalizeTicker(item) !== norm);
+    try {
+      localStorage.setItem(KEY, JSON.stringify(next));
+      window.dispatchEvent(new CustomEvent("assetmind-watchlist-updated", { detail: next }));
+    } catch (err) {
+      console.error("Failed to remove from watchlist:", err);
+    }
+    setList(next);
+  }, []);
+
+  const toggle = useCallback((ticker: string, meta?: Partial<WatchlistStockMeta>) => {
+    const norm = normalizeTicker(ticker);
+    if (!norm) return;
+
+    const currentList = getSavedWatchlist();
+    const exists = currentList.some((item) => normalizeTicker(item) === norm);
+    let next: string[];
+    if (exists) {
+      next = currentList.filter((item) => normalizeTicker(item) !== norm);
+    } else {
+      next = [...currentList, norm];
+      if (meta) {
+        saveWatchlistMeta({ ticker: norm, ...meta });
+      }
+    }
+
+    try {
+      localStorage.setItem(KEY, JSON.stringify(next));
+      window.dispatchEvent(new CustomEvent("assetmind-watchlist-updated", { detail: next }));
+    } catch (err) {
+      console.error("Failed to toggle watchlist in localStorage:", err);
+    }
+    setList(next);
+  }, []);
+
+  const clear = useCallback(() => {
+    try {
+      localStorage.setItem(KEY, JSON.stringify([]));
+      window.dispatchEvent(new CustomEvent("assetmind-watchlist-updated", { detail: [] }));
+    } catch (err) {
+      console.error("Failed to clear watchlist:", err);
+    }
+    setList([]);
+  }, []);
+
+  return { list, toggle, has, add, remove, clear };
 }
+
 
 export const fmtChange = (n: number) => `${n >= 0 ? "+" : ""}${n.toFixed(2)}%`;
 

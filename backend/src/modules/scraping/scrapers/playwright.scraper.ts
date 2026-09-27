@@ -1,13 +1,20 @@
-import { chromium, Browser } from 'playwright';
+import { chromium, Browser, BrowserContext } from 'playwright';
 import { StockScraper } from './scraper.interface';
 import { env } from '../../../config/env';
+
+// In-memory cache for fetched HTML to avoid duplicate fetches for same URL
+const htmlCache = new Map<string, { html: string; timestamp: number }>();
+const HTML_CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
 export class PlaywrightStockScraper implements StockScraper {
   public readonly provider = 'playwright' as const;
   private browserInstance: Browser | null = null;
+  private contextInstance: BrowserContext | null = null;
 
   private async getBrowser(): Promise<Browser> {
     if (!this.browserInstance || !this.browserInstance.isConnected()) {
+      // Close stale context if browser died
+      this.contextInstance = null;
       try {
         this.browserInstance = await chromium.launch({
           headless: env.PLAYWRIGHT_HEADLESS,
@@ -36,9 +43,15 @@ export class PlaywrightStockScraper implements StockScraper {
     return this.browserInstance;
   }
 
-  public async fetchHtml(url: string, waitForSelector?: string): Promise<string> {
+  /**
+   * Reuse a single BrowserContext across fetches to avoid the overhead
+   * of creating new contexts (cookie jars, proxy configs, etc.) for every URL.
+   */
+  private async getContext(): Promise<BrowserContext> {
+    if (this.contextInstance) return this.contextInstance;
+
     const browser = await this.getBrowser();
-    const context = await browser.newContext({
+    this.contextInstance = await browser.newContext({
       userAgent:
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
       viewport: { width: 1440, height: 900 },
@@ -52,7 +65,17 @@ export class PlaywrightStockScraper implements StockScraper {
         'Sec-Ch-Ua-Platform': '"Windows"',
       },
     });
+    return this.contextInstance;
+  }
 
+  public async fetchHtml(url: string, waitForSelector?: string): Promise<string> {
+    // Check in-memory cache first to skip duplicate fetches
+    const cached = htmlCache.get(url);
+    if (cached && Date.now() - cached.timestamp < HTML_CACHE_TTL_MS) {
+      return cached.html;
+    }
+
+    const context = await this.getContext();
     const page = await context.newPage();
 
     try {
@@ -73,21 +96,30 @@ export class PlaywrightStockScraper implements StockScraper {
         }
       }
 
-      // Small delay for dynamic client hydration
-      await page.waitForTimeout(1200);
+      // Small delay for dynamic client hydration (reduced from 1200ms)
+      await page.waitForTimeout(500);
 
       const html = await page.content();
+
+      // Cache the result
+      htmlCache.set(url, { html, timestamp: Date.now() });
+
       return html;
     } finally {
       await page.close().catch(() => {});
-      await context.close().catch(() => {});
     }
   }
 
   public async close(): Promise<void> {
+    if (this.contextInstance) {
+      await this.contextInstance.close().catch(() => {});
+      this.contextInstance = null;
+    }
     if (this.browserInstance) {
       await this.browserInstance.close().catch(() => {});
       this.browserInstance = null;
     }
+    // Clear HTML cache on close
+    htmlCache.clear();
   }
 }

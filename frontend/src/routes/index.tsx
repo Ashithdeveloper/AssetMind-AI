@@ -174,7 +174,7 @@ function ExplorePage() {
   const [selected, setSelected] = useState<Company>(fallbackCompanies[0]);
   const [isLiveConnected, setIsLiveConnected] = useState(false);
   const [loading, setLoading] = useState(true);
-  const { list: watchlist, toggle: toggleWatchlist } = useWatchlist();
+  const { list: watchlist, toggle: toggleWatchlist, has: hasWatchlist } = useWatchlist();
   const [mobileNav, setMobileNav] = useState(false);
   const [mobileFilters, setMobileFilters] = useState(false);
   const [screenerModalOpen, setScreenerModalOpen] = useState(false);
@@ -505,8 +505,18 @@ function ExplorePage() {
                 {selected && results.length > 0 && (
                   <SpotlightCard
                     company={selected}
-                    onWatch={() => toggleWatchlist(selected.ticker)}
-                    watched={watchlist.includes(selected.ticker)}
+                    onWatch={() =>
+                      toggleWatchlist(selected.ticker, {
+                        name: selected.name,
+                        exchange: selected.exchange,
+                        price: selected.price,
+                        change: selected.change,
+                        sector: selected.sector,
+                        marketCap: selected.marketCap,
+                        pe: selected.pe,
+                      })
+                    }
+                    watched={hasWatchlist(selected.ticker)}
                   />
                 )}
 
@@ -528,8 +538,25 @@ function ExplorePage() {
                     companies={results}
                     selectedTicker={selected?.ticker}
                     watchlist={watchlist}
+                    hasWatchlist={hasWatchlist}
                     onSelect={(c) => setSelected(c)}
-                    onWatch={(ticker) => toggleWatchlist(ticker)}
+                    onWatch={(ticker) => {
+                      const item = results.find((c) => c.ticker === ticker);
+                      toggleWatchlist(
+                        ticker,
+                        item
+                          ? {
+                              name: item.name,
+                              exchange: item.exchange,
+                              price: item.price,
+                              change: item.change,
+                              sector: item.sector,
+                              marketCap: item.marketCap,
+                              pe: item.pe,
+                            }
+                          : undefined,
+                      );
+                    }}
                     searchQuery={query}
                     onOpenScreenerScout={() => setScreenerModalOpen(true)}
                   />
@@ -992,6 +1019,7 @@ function CompanyCardsGrid({
   companies,
   selectedTicker,
   watchlist,
+  hasWatchlist,
   onSelect,
   onWatch,
   searchQuery,
@@ -1000,6 +1028,7 @@ function CompanyCardsGrid({
   companies: Company[];
   selectedTicker?: string;
   watchlist: string[];
+  hasWatchlist?: (ticker: string) => boolean;
   onSelect: (c: Company) => void;
   onWatch: (ticker: string) => void;
   searchQuery?: string;
@@ -1036,7 +1065,7 @@ function CompanyCardsGrid({
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {companies.map((c) => {
         const isSelected = selectedTicker === c.ticker;
-        const isWatched = watchlist.includes(c.ticker);
+        const isWatched = hasWatchlist ? hasWatchlist(c.ticker) : watchlist.includes(c.ticker);
 
         return (
           <div

@@ -624,7 +624,7 @@ export class ScreenerExtractionService {
       { upsert: true }
     );
 
-    // 5. Store key financial data entries
+    // 5. Batch upsert key financial data entries (single bulkWrite instead of N sequential queries)
     const keyDataEntries: Array<{ name: string; val: number | null; unit: string }> = [
       { name: 'marketCap', val: data.marketCapCr, unit: 'INR Crore' },
       { name: 'peRatio', val: m.peRatio, unit: 'ratio' },
@@ -640,15 +640,16 @@ export class ScreenerExtractionService {
       { name: 'eps', val: m.eps, unit: 'INR' },
     ];
 
-    for (const entry of keyDataEntries) {
-      if (entry.val !== null && !isNaN(entry.val)) {
-        await FinancialData.findOneAndUpdate(
-          {
+    const fdBulkOps = keyDataEntries
+      .filter((entry) => entry.val !== null && !isNaN(entry.val))
+      .map((entry) => ({
+        updateOne: {
+          filter: {
             assetId: asset._id,
             symbol: data.symbol,
             metricName: entry.name,
           },
-          {
+          update: {
             $set: {
               assetId: asset._id,
               symbol: data.symbol,
@@ -663,10 +664,14 @@ export class ScreenerExtractionService {
               validationStatus: 'VALID',
             },
           },
-          { upsert: true }
-        );
-      }
+          upsert: true,
+        },
+      }));
+
+    if (fdBulkOps.length > 0) {
+      await FinancialData.bulkWrite(fdBulkOps as any, { ordered: false });
     }
+
   }
 
   /**

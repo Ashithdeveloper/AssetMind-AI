@@ -430,7 +430,18 @@ function CompanyPage() {
           <Button
             size="sm"
             variant={wl.has(ticker) ? "signal" : "outline"}
-            onClick={() => wl.toggle(ticker)}
+            onClick={() =>
+              wl.toggle(ticker, {
+                name: profile?.companyName || fallback.name,
+                exchange: profile?.exchange || fallback.exchange,
+                price: liveQuote?.price ?? profile?.latestSharePrice ?? fallback.price,
+                change: liveQuote?.changePercent ?? profile?.dailyPercentageChange ?? fallback.change,
+                sector: profile?.sector || fallback.sector,
+                marketCap: profile?.marketCapitalization
+                  ? `₹${Math.round(profile.marketCapitalization / 1e7).toLocaleString("en-IN")} Cr`
+                  : fallback.marketCap,
+              })
+            }
           >
             <Heart className={cn("mr-1.5 size-4", wl.has(ticker) && "fill-current text-primary")} />
             {wl.has(ticker) ? "Watching" : "Watch"}

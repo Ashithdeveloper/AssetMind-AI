@@ -14,6 +14,7 @@ export interface TriggerScrapeParams {
   symbol: string;
   sources?: string[];
   scraperProvider?: 'playwright' | 'scrapingbee';
+  force?: boolean;
 }
 
 export interface PaginationParams {
@@ -22,6 +23,9 @@ export interface PaginationParams {
   symbol?: string;
   status?: string;
 }
+
+// Skip re-scraping if the last successful scrape was within this window
+const DUPLICATE_SCRAPE_COOLDOWN_MS = 15 * 60 * 1000; // 15 minutes
 
 export class ScrapingService {
   /**
@@ -80,12 +84,41 @@ export class ScrapingService {
   }
 
   /**
-   * Core orchestrator: triggers scraping for a symbol across sources
+   * Check if a symbol was recently scraped successfully (within cooldown)
+   * Returns the recent job if found, otherwise null.
+   */
+  private static async getRecentSuccessfulJob(symbol: string): Promise<IScrapingJob | null> {
+    const cutoff = new Date(Date.now() - DUPLICATE_SCRAPE_COOLDOWN_MS);
+    return ScrapingJob.findOne({
+      symbol,
+      status: { $in: ['COMPLETED', 'PARTIAL'] },
+      completedAt: { $gte: cutoff },
+    })
+      .sort({ completedAt: -1 })
+      .lean();
+  }
+
+  /**
+   * Core orchestrator: triggers scraping for a symbol across sources.
+   * Skips redundant scrapes if the symbol was successfully scraped within cooldown.
    */
   public static async triggerScrape(params: TriggerScrapeParams) {
     const symbol = params.symbol.trim().toUpperCase();
     if (!symbol) {
       throw new AppError('Stock symbol is required', 400, 'SYMBOL_REQUIRED');
+    }
+
+    // Skip duplicate scrapes unless force is set
+    if (!params.force) {
+      const recentJob = await this.getRecentSuccessfulJob(symbol);
+      if (recentJob) {
+        console.log(
+          `[ScrapingService] ⏭️ Skipping ${symbol} — already scraped ${Math.round(
+            (Date.now() - new Date(recentJob.completedAt!).getTime()) / 1000
+          )}s ago (cooldown: ${DUPLICATE_SCRAPE_COOLDOWN_MS / 1000}s)`
+        );
+        return recentJob;
+      }
     }
 
     const scraperProvider = params.scraperProvider || 'playwright';
@@ -192,7 +225,7 @@ export class ScrapingService {
             errors.push(`[${adapter.name}] ${validated.validationErrors.join('; ')}`);
           }
 
-          // Persist to MongoDB
+          // Persist to MongoDB (optimized batch writes)
           await this.persistScrapedData(validated);
         } catch (sourceErr: any) {
           const errMsg = `[${adapter.name}] Scraping failed: ${sourceErr.message || sourceErr}`;
@@ -230,7 +263,8 @@ export class ScrapingService {
   }
 
   /**
-   * Persist validated data to MongoDB (Asset, FinancialData, StockPrice, FinancialDocument)
+   * Persist validated data to MongoDB (Asset, FinancialData, StockPrice, FinancialDocument).
+   * Optimized: uses bulkWrite for FinancialData and upserts for StockPrice to avoid duplicates.
    */
   private static async persistScrapedData(data: ValidatedScrapedData): Promise<void> {
     // 1. Find or create Asset
@@ -272,78 +306,95 @@ export class ScrapingService {
 
     const assetId = asset._id;
 
-    // 2. Save Stock Price if available
+    // 2. Upsert Stock Price (avoids duplicate price records for same asset+source)
     if (data.stockPrice) {
-      await StockPrice.create({
-        assetId,
-        symbol: data.symbol,
-        price: data.stockPrice.price,
-        currency: data.stockPrice.currency,
-        change: data.stockPrice.change,
-        changePercent: data.stockPrice.changePercent,
-        previousClose: data.stockPrice.previousClose,
-        volume: data.stockPrice.volume,
-        priceTimestamp: data.stockPrice.priceTimestamp || new Date(),
-        source: data.source,
-        sourceUrl: data.sourceUrl,
-        collectedAt: data.collectedAt,
-      });
-    }
-
-    // 3. Upsert Financial Metrics (avoid duplicate metrics for same asset, period, metricName, and source)
-    for (const metric of data.financialMetrics) {
-      await FinancialData.findOneAndUpdate(
-        {
-          assetId,
-          metricName: metric.metricName,
-          reportingPeriod: metric.reportingPeriod,
-          source: data.source,
-        },
+      await StockPrice.findOneAndUpdate(
+        { assetId, source: data.source },
         {
           $set: {
             assetId,
             symbol: data.symbol,
-            metricName: metric.metricName,
-            metricValue: metric.metricValue,
-            currency: metric.currency,
-            unit: metric.unit,
-            reportingPeriod: metric.reportingPeriod,
-            dataTimestamp: metric.dataTimestamp,
+            price: data.stockPrice.price,
+            currency: data.stockPrice.currency,
+            change: data.stockPrice.change,
+            changePercent: data.stockPrice.changePercent,
+            previousClose: data.stockPrice.previousClose,
+            volume: data.stockPrice.volume,
+            priceTimestamp: data.stockPrice.priceTimestamp || new Date(),
             source: data.source,
             sourceUrl: data.sourceUrl,
-            scraperProvider: data.scraperProvider,
             collectedAt: data.collectedAt,
-            validationStatus: metric.validationStatus,
-            metadata: metric.metadata,
           },
         },
-        { upsert: true, returnDocument: 'after' }
+        { upsert: true }
       );
     }
 
-    // 4. Save Financial Documents if any
-    for (const doc of data.financialDocuments) {
-      const existingDoc = await FinancialDocument.findOne({
-        assetId,
-        documentType: doc.documentType,
-        title: doc.title,
-      });
+    // 3. Batch upsert Financial Metrics (single bulkWrite instead of N sequential queries)
+    if (data.financialMetrics.length > 0) {
+      const bulkOps = data.financialMetrics.map((metric) => ({
+        updateOne: {
+          filter: {
+            assetId,
+            metricName: metric.metricName,
+            reportingPeriod: metric.reportingPeriod,
+            source: data.source,
+          },
+          update: {
+            $set: {
+              assetId,
+              symbol: data.symbol,
+              metricName: metric.metricName,
+              metricValue: metric.metricValue,
+              currency: metric.currency,
+              unit: metric.unit,
+              reportingPeriod: metric.reportingPeriod,
+              dataTimestamp: metric.dataTimestamp,
+              source: data.source,
+              sourceUrl: data.sourceUrl,
+              scraperProvider: data.scraperProvider,
+              collectedAt: data.collectedAt,
+              validationStatus: metric.validationStatus,
+              metadata: metric.metadata,
+            },
+          },
+          upsert: true,
+        },
+      }));
 
-      if (!existingDoc) {
-        await FinancialDocument.create({
-          assetId,
-          symbol: data.symbol,
-          documentType: doc.documentType,
-          title: doc.title,
-          content: doc.content,
-          source: data.source,
-          sourceUrl: doc.sourceUrl || data.sourceUrl,
-          publicationDate: doc.publicationDate,
-          collectedAt: data.collectedAt,
-          processingStatus: 'PROCESSED',
-        });
-      }
+      await FinancialData.bulkWrite(bulkOps, { ordered: false });
     }
+
+    // 4. Batch upsert Financial Documents
+    if (data.financialDocuments.length > 0) {
+      const docBulkOps = data.financialDocuments.map((doc) => ({
+        updateOne: {
+          filter: {
+            assetId,
+            documentType: doc.documentType,
+            title: doc.title,
+          },
+          update: {
+            $setOnInsert: {
+              assetId,
+              symbol: data.symbol,
+              documentType: doc.documentType,
+              title: doc.title,
+              content: doc.content,
+              source: data.source,
+              sourceUrl: doc.sourceUrl || data.sourceUrl,
+              publicationDate: doc.publicationDate,
+              collectedAt: data.collectedAt,
+              processingStatus: 'PROCESSED' as const,
+            },
+          },
+          upsert: true,
+        },
+      }));
+
+      await FinancialDocument.bulkWrite(docBulkOps, { ordered: false });
+    }
+
 
     // Trigger asynchronous RAG vector indexing synchronization for the updated asset
     RagSyncService.syncAssetBySymbol(data.symbol).catch((ragErr) => {
@@ -351,3 +402,4 @@ export class ScrapingService {
     });
   }
 }
+
