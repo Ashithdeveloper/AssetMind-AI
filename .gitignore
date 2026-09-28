@@ -1,0 +1,59 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Environment Variables (Ignore all .env files EXCEPT .env.example)
+.env
+.env.*
+*.env
+!.env.example
+!*.env.example
+.dev.vars
+.dev.vars.*
+
+# Build & Output Artifacts
+dist/
+dist-ssr/
+build/
+.output/
+.vinxi/
+.tanstack/
+.nitro/
+*.local
+
+# Scraping dumps & temporary outputs
+html_dumps/
+temp/
+tmp/
+coverage/
+*.lcov
+.nyc_output/
+
+# Testing & Playwright
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Editor & OS files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.bak

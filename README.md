@@ -139,7 +139,7 @@ graph TD
 | **Frontend Framework** | React 19, TanStack Start, TanStack Router, TanStack Query |
 | **Frontend Styling** | Tailwind CSS v4, Radix UI Primitives, Lucide Icons, Class Variance Authority |
 | **Data Visualization** | Recharts (Financial charts, price history, ratios) |
-| **Backend Runtime** | Node.js (v20+), TypeScript (v5.8+), `tsx` engine |
+| **Backend Runtime** | Node.js (v20+), TypeScript, `tsx` engine |
 | **Web Server** | Express.js 5, Helmet, CORS, RESTful API Architecture |
 | **Primary Database** | MongoDB Community / Atlas with Mongoose ODM |
 | **Vector Database** | Qdrant Vector Search Engine (REST API Client) |
@@ -177,7 +177,7 @@ AssetMind-AI/
 │   │   ├── utils/                 # Standard API response & error formatters
 │   │   ├── app.ts                 # Express app configuration & middleware
 │   │   └── server.ts              # HTTP server bootstrapper & cron lifecycle
-│   ├── .env.example               # Environment variable reference
+│   ├── .env.example               # Backend environment variable reference template
 │   ├── package.json               # Backend dependencies & npm scripts
 │   └── tsconfig.json              # TypeScript compilation configuration
 │
@@ -201,10 +201,12 @@ AssetMind-AI/
 │   │   │   └── login.tsx          # User authentication page
 │   │   ├── App.tsx                # App root wrapper
 │   │   └── router.tsx             # TanStack router setup
+│   ├── .env.example               # Frontend environment variable reference template
 │   ├── package.json               # Frontend dependencies & npm scripts
 │   ├── vite.config.ts             # Vite configuration with TanStack Start
 │   └── tsconfig.json              # Frontend TypeScript configuration
 │
+├── .gitignore                     # Git ignore rules for node_modules, .env, build output
 └── README.md                      # Project documentation (this file)
 ```
 
@@ -216,7 +218,7 @@ AssetMind-AI/
 
 Ensure you have the following installed on your machine:
 - **Node.js**: v20.x or higher
-- **npm** or **bun**
+- **npm** or **pnpm** / **bun**
 - **MongoDB**: Community Edition running locally (`mongodb://127.0.0.1:27017`) or a MongoDB Atlas URI
 - *(Optional for RAG)* **Qdrant Vector Database**: Running on `http://localhost:6333` (e.g. via Docker: `docker run -p 6333:6333 qdrant/qdrant`)
 - *(Optional for Local LLM)* **Ollama**: Running on `http://localhost:11434`
@@ -234,22 +236,26 @@ cd AssetMind-AI
 
 ### Step 2: Backend Configuration & Startup
 
-1. Navigate to the backend directory and install dependencies:
+1. **Navigate to the backend directory and install dependencies**:
    ```bash
    cd backend
    npm install
    ```
 
-2. Initialize Playwright browsers (for the headless scraping engine):
+2. **Initialize Playwright browsers** (for headless web scraping):
    ```bash
    npx playwright install chromium
    ```
 
-3. Configure environment variables:
+3. **Configure environment variables**:
    ```bash
+   # On macOS/Linux:
    cp .env.example .env
+
+   # On Windows PowerShell:
+   Copy-Item .env.example .env
    ```
-   Edit `.env` as required (defaults work out-of-the-box for local development):
+   Edit `.env` as required (default values work out-of-the-box for local development):
    ```env
    PORT=5000
    NODE_ENV=development
@@ -270,15 +276,16 @@ cd AssetMind-AI
    QDRANT_COLLECTION=assetmind_stock_documents
    OLLAMA_URL=http://localhost:11434
    OLLAMA_MODEL=gpt-oss:20b-cloud
+   OLLAMA_TIMEOUT_MS=120000
    ```
 
-4. *(Optional)* Seed initial company data or sync RAG knowledge:
+4. **Seed initial company data & sync RAG knowledge base** *(Optional)*:
    ```bash
-   npm run seed:companies    # Seeds initial equities
-   npm run sync:rag          # Builds documents and vectorizes to Qdrant
+   npm run seed:companies    # Seeds 80+ top companies into MongoDB
+   npm run sync:rag          # Chunks documents and vectorizes into Qdrant
    ```
 
-5. Launch the backend in development mode:
+5. **Launch the backend in development mode**:
    ```bash
    npm run dev
    ```
@@ -288,22 +295,27 @@ cd AssetMind-AI
 
 ### Step 3: Frontend Configuration & Startup
 
-1. Open a new terminal and navigate to the frontend directory:
+1. **Open a new terminal, navigate to the frontend directory, and install dependencies**:
    ```bash
-   cd ../frontend
+   cd frontend
    npm install
    ```
 
-2. *(Optional)* Set frontend environment variables in `frontend/.env`:
-   ```env
-   VITE_API_BASE_URL=http://localhost:5000/api
-   ```
+2. **Configure frontend environment variables**:
+   ```bash
+   # On macOS/Linux:
+   cp .env.example .env
 
-3. Launch the frontend development server:
+   # On Windows PowerShell:
+   Copy-Item .env.example .env
+   ```
+   *The default `VITE_API_BASE_URL` is configured to `http://localhost:5000/api`.*
+
+3. **Launch the frontend development server**:
    ```bash
    npm run dev
    ```
-   *Open `http://localhost:8080` (or the URL displayed in the terminal) in your browser.*
+   *Open the URL shown in the terminal (typically `http://localhost:8080` or `http://localhost:5173`) in your browser.*
 
 ---
 
@@ -390,7 +402,7 @@ The backend includes a rich suite of CLI scripts for automated testing, data see
 
 ```bash
 # Run all automated test suites (Auth, Scraping, Models, APIs)
-npm run test
+npm test
 
 # Run RAG vector retrieval & embedding tests
 npm run test:rag
@@ -410,15 +422,27 @@ npm run sync:rag
 # Seed 80+ top companies into the database
 npm run seed:companies
 
+# Scrape Indian companies from Screener.in
+npm run scrape:india
+
+# Enrich existing company records with multi-source fundamentals
+npm run enrich:companies
+
+# Crawl live market prices and updates
+npm run crawl:market
+
 # Check database collection counts & statistics
 npm run db:stats
+
+# Clean up / remove global companies if focusing strictly on Indian markets
+npm run db:purge-global
 ```
 
 ---
 
 ## 🔒 Security & Best Practices
 
-- **Zero-Storage of Sensitive Plaintext**: Passwords salted with bcrypt (10 rounds); API keys isolated in environment variables.
+- **Zero-Storage of Sensitive Plaintext**: Passwords salted with bcrypt (10 rounds); API keys and credentials isolated in `.env` files (never committed to version control).
 - **Header Hardening**: Pre-configured `Helmet` middleware enforcing secure HTTP response headers and Content Security Policies.
 - **CORS Restricted**: Controlled origin handling for frontend client origins.
 - **Fail-Safe Web Scraping**: Headless browsers operate with random user agents, respectful request pacing, and sandboxed page contexts.
