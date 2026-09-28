@@ -103,34 +103,15 @@ backend/
 
 Copy `.env.example` to `.env` in the `backend/` directory:
 
-```env
-PORT=5000
-NODE_ENV=development
+```bash
+# On macOS/Linux:
+cp .env.example .env
 
-# MongoDB Connection
-MONGODB_URI=mongodb://127.0.0.1:27017/assetmind_ai
-
-# JWT Authentication
-JWT_SECRET=super_secret_jwt_key_for_assetmind_ai_development_2026
-JWT_EXPIRES_IN=1d
-
-# Scraping Configuration
-SCRAPER_PROVIDER=playwright   # 'playwright' or 'scrapingbee'
-PLAYWRIGHT_HEADLESS=true
-SCRAPINGBEE_API_KEY=
-
-# Automated Background Scraping
-AUTO_SCRAPE_ENABLED=true
-AUTO_SCRAPE_INTERVAL_HOURS=4
-AUTO_SCRAPE_SYMBOLS=TCS,INFY,WIPRO,HCLTECH,ADANIENT,ADANIPORTS,ADANIGREEN,ADANIPOWER,OLAELEC,RELIANCE,TATAMOTORS
-
-# Qdrant Vector DB & Ollama LLM
-QDRANT_URL=http://localhost:6333
-QDRANT_COLLECTION=assetmind_stock_documents
-OLLAMA_URL=http://localhost:11434
-OLLAMA_MODEL=gpt-oss:20b-cloud
-OLLAMA_TIMEOUT_MS=120000
+# On Windows PowerShell:
+Copy-Item .env.example .env
 ```
+
+Refer to `.env.example` for all configurable environment options.
 
 ---
 

@@ -255,29 +255,7 @@ cd AssetMind-AI
    # On Windows PowerShell:
    Copy-Item .env.example .env
    ```
-   Edit `.env` as required (default values work out-of-the-box for local development):
-   ```env
-   PORT=5000
-   NODE_ENV=development
-   MONGODB_URI=mongodb://127.0.0.1:27017/assetmind_ai
-
-   JWT_SECRET=super_secret_jwt_key_for_assetmind_ai_development_2026
-   JWT_EXPIRES_IN=1d
-
-   SCRAPER_PROVIDER=playwright
-   PLAYWRIGHT_HEADLESS=true
-
-   AUTO_SCRAPE_ENABLED=true
-   AUTO_SCRAPE_INTERVAL_HOURS=4
-   AUTO_SCRAPE_SYMBOLS=TCS,INFY,WIPRO,HCLTECH,ADANIENT,ADANIPORTS,ADANIGREEN,ADANIPOWER,OLAELEC,RELIANCE,TATAMOTORS
-
-   # Vector & LLM Settings
-   QDRANT_URL=http://localhost:6333
-   QDRANT_COLLECTION=assetmind_stock_documents
-   OLLAMA_URL=http://localhost:11434
-   OLLAMA_MODEL=gpt-oss:20b-cloud
-   OLLAMA_TIMEOUT_MS=120000
-   ```
+   *(Refer to `.env.example` for all configurable environment variables).*
 
 4. **Seed initial company data & sync RAG knowledge base** *(Optional)*:
    ```bash

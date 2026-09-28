@@ -58,9 +58,12 @@ The **AssetMind AI Frontend** is a modern, responsive web application designed f
    ```
 
 2. Environment Configuration:
-   Create a `.env` file (optional if using defaults):
-   ```env
-   VITE_API_BASE_URL=http://localhost:5000/api
+   ```bash
+   # On macOS/Linux:
+   cp .env.example .env
+
+   # On Windows PowerShell:
+   Copy-Item .env.example .env
    ```
 
 3. Start development server:
